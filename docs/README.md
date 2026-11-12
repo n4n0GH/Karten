@@ -18,6 +18,7 @@ go into the code.
 | [Places](places.md) | Search, clicking places on the map, details, opening hours, Wikipedia, Google |
 | [Interface](interface.md) | The QML files, settings, colours, icons |
 | [Development](development.md) | Building, tests, debugging, conventions, how to add things |
+| [Releasing](releasing.md) | Making a release, what the workflow does with it, the Flatpak repository and its signing key |
 
 The headers under `src/` carry the reference documentation of each class as
 comments. These pages explain how the classes fit together and why they are
