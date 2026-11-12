@@ -9,8 +9,8 @@ SPDX-License-Identifier: CC0-1.0
 
 What is needed is listed in the [README](../README.md). On openSUSE
 Tumbleweed the development packages beyond the usual Qt 6 and KDE Frameworks
-ones are `qt6-location-private-devel`, `kopeninghours-devel` and
-`kf6-kwallet-devel`.
+ones are `qt6-location-private-devel`, `kopeninghours-devel`,
+`kpublictransport-devel` and `kf6-kwallet-devel`.
 
 MapLibre Native Qt is not packaged there. `scripts/build-maplibre.sh [PREFIX]`
 clones version 3.0.0 with its submodules and builds it into a prefix next to
@@ -38,9 +38,9 @@ remote. It comes from the setup of the clang-format git hook and is harmless.
 
 ## Flatpak
 
-`flatpak/io.github.n4n0gh.karten.yml` builds Karten on the KDE runtime. Two
-things the runtime lacks are built first: KOpeningHours, and MapLibre Native
-Qt with the same adjustments as `scripts/build-maplibre.sh`
+`flatpak/io.github.n4n0gh.karten.yml` builds Karten on the KDE runtime. What
+the runtime lacks is built first: KOpeningHours, KPublicTransport, and
+MapLibre Native Qt with the same adjustments as `scripts/build-maplibre.sh`
 (`flatpak/maplibre-qt-location-private.patch` is the one-line change).
 
 ```sh

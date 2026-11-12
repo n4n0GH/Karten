@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-project(karten VERSION 0.1.1 LANGUAGES CXX)
+project(karten VERSION 0.2.0 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.6.0")
 set(KF_MIN_VERSION "6.8.0")
@@ -55,6 +55,8 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
 find_package(ZLIB REQUIRED)
 # Understands OpenStreetMap's notation for opening hours.
 find_package(KOpeningHours REQUIRED)
+# Public transport connections.
+find_package(KPublicTransport REQUIRED)
 
 # Draws the map. Only its Qt Location plugin is used, at run time; see
 # scripts/build-maplibre.sh where the distribution does not package it.

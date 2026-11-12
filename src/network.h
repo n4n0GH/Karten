@@ -20,4 +20,8 @@ QNetworkRequest request(const QUrl &url);
 /// Makes what the interface loads by itself, such as pictures, identify the
 /// application in the same way. The caller owns the factory.
 QQmlNetworkAccessManagerFactory *qmlFactory();
+
+/// A network access manager of its own for a library that brings its own
+/// requests, which identifies the application on every one of them.
+QNetworkAccessManager *identifyingManager(QObject *parent);
 }

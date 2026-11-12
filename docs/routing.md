@@ -145,6 +145,35 @@ arrival at a detour and turning the following departure into "continue") and
 fills the properties the interface reads: `path`, `bounds`, `legs` with their
 `steps`, and the totals.
 
+### Public transport
+
+The fourth travel mode, `Transit`, does not go through `plan()`.
+`TransitPlanner` asks KPublicTransport for journeys from the first stop to
+the last at `transitTime` (now, when that is not valid; `arriveBy` says which
+end the time is for) and keeps the answers.
+
+- Only the **Transitous** backend is enabled on the `Manager`
+  (`setBackendsEnabledByDefault(false)`), for the reasons in the README.
+  The library is given a network access manager of Karten's own
+  (`Network::identifyingManager`) so that its requests carry Karten's
+  User-Agent.
+- `connections()` lists what was found, sorted by departure, for the user to
+  choose from. Answers without any ride (walking all the way) are dropped.
+- `details(connection)` turns one journey into what a route is made of:
+  the line (each section's path, or straight lines from stop to stop when the
+  service gives none), bounds, totals and one leg per section. A ride's
+  steps are its stops with times; walks, changes and waits have none.
+  Expected times are used where the service reports them, with the delay
+  noted.
+- `RouteController::showConnection` puts those into the same properties a
+  road route uses, so the map and the directions panel need no second code
+  path. It leaves `m_routePoints` empty, which is what keeps a connection
+  from being dragged: there is nothing near the pointer to take hold of.
+
+The legs of a connection carry two optional keys that road legs do not have:
+`icon` (from KPublicTransport: a theme icon name or a `qrc:` address) and
+`detail`, a line of text shown in place of duration and distance.
+
 ### Previews
 
 While a detour is dragged, `previewDetour` / `previewMovedDetour` plan the

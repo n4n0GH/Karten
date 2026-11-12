@@ -42,6 +42,8 @@ add_executable(karten
     tileserver.h
     tilestore.cpp
     tilestore.h
+    transitplanner.cpp
+    transitplanner.h
 )
 
 ecm_add_qml_module(karten
@@ -57,8 +59,10 @@ qt_add_resources(karten "icons"
     PREFIX "/icons/hicolor/scalable/actions"
     BASE icons
     FILES
+        icons/transit-stop-symbolic.svg
         icons/travel-cycle-symbolic.svg
         icons/travel-drive-symbolic.svg
+        icons/travel-transit-symbolic.svg
         icons/travel-walk-symbolic.svg
         icons/turn-left-symbolic.svg
         icons/turn-right-symbolic.svg
@@ -113,6 +117,7 @@ target_link_libraries(karten PRIVATE
     KF6::I18nQml
     KF6::Wallet
     KOpeningHours
+    KPublicTransport
 )
 
 install(TARGETS karten ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

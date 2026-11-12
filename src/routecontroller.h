@@ -5,6 +5,7 @@
 
 #include "router.h"
 
+#include <QDateTime>
 #include <QElapsedTimer>
 #include <QGeoCoordinate>
 #include <QGeoRectangle>
@@ -17,10 +18,15 @@
 #include <memory>
 
 class OfflineManager;
+class TransitPlanner;
 
 /// Plans the route from a start to a destination, by way of further stops if
 /// there are any. Downloaded routing data is used when it covers all of them;
 /// otherwise the route comes from an online service.
+///
+/// By public transport there are several connections to choose from, each
+/// at its own times; they are looked up online by TransitPlanner and shown
+/// through the same properties as a route.
 class RouteController : public QObject
 {
     Q_OBJECT
@@ -47,8 +53,19 @@ class RouteController : public QObject
     /// out; empty when none is, or while it is still being worked out.
     Q_PROPERTY(QVariantList previewPath READ previewPath NOTIFY previewChanged)
     Q_PROPERTY(QGeoRectangle bounds READ bounds NOTIFY routeChanged)
-    /// The route from each stop to the next: maps with the keys title,
-    /// distance, duration and steps. The steps are maps with the keys text,
+    /// By public transport: the connections found, see
+    /// TransitPlanner::connections(). Empty for the other ways of travelling.
+    Q_PROPERTY(QVariantList connections READ connections NOTIFY routeChanged)
+    /// Which of the connections is shown, counted from 0.
+    Q_PROPERTY(int connection READ connection WRITE setConnection NOTIFY routeChanged)
+    /// When to travel by public transport; not valid means now.
+    Q_PROPERTY(QDateTime transitTime READ transitTime NOTIFY transitTimeChanged)
+    /// Whether transitTime is when to arrive rather than when to leave.
+    Q_PROPERTY(bool arriveBy READ arriveBy NOTIFY transitTimeChanged)
+    /// The parts of the route: from each stop to the next, or by public
+    /// transport each walk and ride. Maps with the keys title, distance,
+    /// duration and steps, and optionally icon and detail (a line of text
+    /// in place of duration and distance). The steps are maps with the keys text,
     /// distance, icon, latitude and longitude.
     Q_PROPERTY(QVariantList legs READ legs NOTIFY routeChanged)
     Q_PROPERTY(QString distanceText READ distanceText NOTIFY routeChanged)
@@ -62,6 +79,7 @@ public:
         Drive,
         Cycle,
         Walk,
+        Transit,
     };
     Q_ENUM(TravelMode)
 
@@ -82,6 +100,14 @@ public:
     QGeoRectangle bounds() const;
     QVariantList stops() const;
     QVariantList detours() const;
+    QVariantList connections() const;
+    int connection() const;
+    void setConnection(int connection);
+    QDateTime transitTime() const;
+    bool arriveBy() const;
+    /// Sets when to travel by public transport. A time that is not valid
+    /// means to leave now.
+    Q_INVOKABLE void setTransitTime(const QDateTime &time, bool arriveBy);
     QVariantList legs() const;
     QString distanceText() const;
     QString durationText() const;
@@ -125,6 +151,7 @@ Q_SIGNALS:
     void busyChanged();
     void routeChanged();
     void previewChanged();
+    void transitTimeChanged();
 
 private:
     struct Stop {
@@ -168,6 +195,8 @@ private:
     void plan(const Places &places, const Cancel &cancel, const std::function<void(const Outcome &)> &done);
     void planOnline(const Places &places, const Cancel &cancel, bool hadOfflineData, const std::function<void(const Outcome &)> &done);
     void recalculate();
+    void planTransit();
+    void showConnection(int connection);
     void startPreview(const QList<Stop> &stops);
     void runPreview();
     void setError(const QString &error);
@@ -181,6 +210,11 @@ private:
     QVariantList m_path;
     QGeoRectangle m_bounds;
     QVariantList m_legs;
+    TransitPlanner *m_transit;
+    QVariantList m_connections;
+    int m_connection = 0;
+    QDateTime m_transitTime;
+    bool m_arriveBy = false;
     std::vector<GeoPoint> m_routePoints; ///< the route line
     /// Where on the route line the stops and detours lie, in travel order
     /// and without the destination.

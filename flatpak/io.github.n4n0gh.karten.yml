@@ -47,6 +47,16 @@ modules:
         url: https://download.kde.org/stable/release-service/26.08.3/src/kopeninghours-26.08.3.tar.xz
         sha256: 0d785277e38bf37e1bed5d85749c48f7fc228a3f94b995236f4bf52db445241a
 
+  # Public transport connections.
+  - name: kpublictransport
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTING=OFF
+    sources:
+      - type: archive
+        url: https://download.kde.org/stable/release-service/26.08.3/src/kpublictransport-26.08.3.tar.xz
+        sha256: 603ad9793eb63151ac08d0d32fc1a18bc9cb4a3d5c6d05e41fcf7dd073de47a7
+
   # Draws the map.
   - name: maplibre-native-qt
     buildsystem: cmake-ninja

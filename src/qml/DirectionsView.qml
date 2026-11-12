@@ -109,14 +109,24 @@ ColumnLayout {
                     mode: RouteController.Walk,
                     icon: "travel-walk-symbolic",
                     label: i18nc("@option:radio travel on foot", "Walk")
+                },
+                {
+                    mode: RouteController.Transit,
+                    icon: "travel-transit-symbolic",
+                    label: i18nc("@option:radio travel by public transport", "Transit")
                 }
             ]
             QQC2.Button {
                 required property var modelData
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
+                // Four of them only fit as pictures; the name is in the tooltip.
                 text: modelData.label
                 icon.name: modelData.icon
+                display: QQC2.AbstractButton.IconOnly
+                QQC2.ToolTip.text: text
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                 checkable: true
                 checked: RouteController.mode === modelData.mode
                 QQC2.ButtonGroup.group: modeGroup
@@ -180,6 +190,88 @@ ColumnLayout {
         }
     }
 
+    // --- Public transport: when to travel ---
+    readonly property bool transit: RouteController.mode === RouteController.Transit
+
+    /// Passes the chosen time on. "Leave now" is a time that is not valid.
+    function applyTransitTime(): void {
+        if (whenBox.currentIndex === 0) {
+            RouteController.setTransitTime(new Date(NaN), false);
+            return;
+        }
+        const parts = timeField.text.split(":");
+        const hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+        if (parts.length !== 2 || !(hours >= 0 && hours < 24) || !(minutes >= 0 && minutes < 60)) {
+            return;
+        }
+        const when = new Date();
+        when.setDate(when.getDate() + dayBox.currentIndex);
+        when.setHours(hours, minutes, 0, 0);
+        RouteController.setTransitTime(when, whenBox.currentIndex === 2);
+    }
+
+    RowLayout {
+        visible: root.transit
+        spacing: Kirigami.Units.smallSpacing
+
+        QQC2.ComboBox {
+            id: whenBox
+            Layout.fillWidth: true
+            Accessible.name: i18nc("@label:listbox", "When to travel")
+            model: [
+                i18nc("@item:inlistbox when to travel", "Leave now"),
+                i18nc("@item:inlistbox when to travel", "Leave at"),
+                i18nc("@item:inlistbox when to travel", "Arrive by")
+            ]
+            onActivated: {
+                if (currentIndex > 0 && timeField.text.length === 0) {
+                    timeField.text = Qt.formatTime(new Date(), "HH:mm");
+                }
+                root.applyTransitTime();
+            }
+        }
+        QQC2.ComboBox {
+            id: dayBox
+            visible: whenBox.currentIndex > 0
+            Accessible.name: i18nc("@label:listbox", "Day")
+            // Today, tomorrow, then the days of the week to come.
+            model: Array.from({length: 7}, (unused, offset) => {
+                if (offset === 0) {
+                    return i18nc("@item:inlistbox day to travel", "Today");
+                }
+                if (offset === 1) {
+                    return i18nc("@item:inlistbox day to travel", "Tomorrow");
+                }
+                const day = new Date();
+                day.setDate(day.getDate() + offset);
+                return day.toLocaleDateString(Qt.locale(), "dddd");
+            })
+            onActivated: root.applyTransitTime()
+        }
+        QQC2.TextField {
+            id: timeField
+            visible: whenBox.currentIndex > 0
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 4
+            horizontalAlignment: Text.AlignHCenter
+            placeholderText: "12:00"
+            inputMethodHints: Qt.ImhTime
+            validator: RegularExpressionValidator {
+                regularExpression: /([01]?[0-9]|2[0-3]):[0-5][0-9]/
+            }
+            Accessible.name: i18nc("@label:textbox", "Time")
+            onEditingFinished: root.applyTransitTime()
+        }
+    }
+    QQC2.Label {
+        Layout.fillWidth: true
+        visible: root.transit && RouteController.stops.length > 2
+        wrapMode: Text.Wrap
+        font: Kirigami.Theme.smallFont
+        color: Kirigami.Theme.disabledTextColor
+        text: i18nc("@info", "Public transport is looked up from the start to the destination. The stops in between are left out.")
+    }
+
     SearchResults {
         id: results
         Layout.fillWidth: true
@@ -224,6 +316,7 @@ ColumnLayout {
         }
         QQC2.Label {
             Layout.fillWidth: true
+            // By public transport this is the time of departure and arrival.
             text: RouteController.offline
                 ? i18nc("@info distance of a route", "%1, planned offline", RouteController.distanceText)
                 : RouteController.distanceText
@@ -244,11 +337,72 @@ ColumnLayout {
             width: legsScroll.availableWidth
             spacing: 0
 
+            // By public transport: the connections to choose from.
+            Repeater {
+                model: RouteController.connections
+
+                QQC2.ItemDelegate {
+                    id: connection
+                    required property int index
+                    required property var modelData
+                    Layout.fillWidth: true
+                    highlighted: index === RouteController.connection
+                    text: i18nc("@item departure and arrival time of a connection", "%1 – %2", modelData.departure, modelData.arrival)
+                    onClicked: RouteController.connection = index
+
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.largeSpacing
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            QQC2.Label {
+                                Layout.fillWidth: true
+                                text: connection.text
+                                font.bold: connection.highlighted
+                                color: connection.highlighted ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                                elide: Text.ElideRight
+                            }
+                            QQC2.Label {
+                                Layout.fillWidth: true
+                                text: connection.modelData.lines.join(i18nc("separates the lines of a connection", " › "))
+                                font: Kirigami.Theme.smallFont
+                                color: connection.highlighted ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.disabledTextColor
+                                elide: Text.ElideRight
+                            }
+                        }
+                        ColumnLayout {
+                            spacing: 0
+                            QQC2.Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: connection.modelData.duration
+                                color: connection.highlighted ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                            }
+                            QQC2.Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: connection.modelData.changes === 0
+                                    ? i18nc("@info a connection without changing trains", "Direct")
+                                    : i18ncp("@info number of times to change trains", "%1 change", "%1 changes", connection.modelData.changes)
+                                font: Kirigami.Theme.smallFont
+                                color: connection.highlighted ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.disabledTextColor
+                            }
+                        }
+                    }
+                }
+            }
+            Kirigami.Separator {
+                Layout.fillWidth: true
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+                visible: RouteController.connections.length > 0
+            }
+
             Repeater {
                 model: RouteController.legs
 
                 ColumnLayout {
                     id: leg
+                    // A walk between two rides has nothing to unfold.
+                    readonly property bool expandable: modelData.steps.length > 0
                     required property int index
                     required property var modelData
                     readonly property bool expanded: root.expandedLegs[index] === true
@@ -261,6 +415,9 @@ ColumnLayout {
                         text: leg.modelData.title
                         Accessible.description: leg.expanded ? i18nc("@info accessible", "Steps shown") : i18nc("@info accessible", "Steps hidden")
                         onClicked: {
+                            if (!leg.expandable) {
+                                return;
+                            }
                             const expanded = Object.assign({}, root.expandedLegs);
                             expanded[leg.index] = !leg.expanded;
                             root.expandedLegs = expanded;
@@ -272,6 +429,14 @@ ColumnLayout {
                                 source: leg.expanded ? "arrow-down-symbolic" : (Application.layoutDirection === Qt.RightToLeft ? "arrow-left-symbolic" : "arrow-right-symbolic")
                                 implicitWidth: Kirigami.Units.iconSizes.small
                                 implicitHeight: Kirigami.Units.iconSizes.small
+                                opacity: leg.expandable ? 1 : 0
+                            }
+                            // What kind of travel this part is, by public transport.
+                            Kirigami.Icon {
+                                visible: (leg.modelData.icon ?? "").length > 0
+                                source: leg.modelData.icon ?? ""
+                                implicitWidth: Kirigami.Units.iconSizes.smallMedium
+                                implicitHeight: Kirigami.Units.iconSizes.smallMedium
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true
@@ -283,7 +448,10 @@ ColumnLayout {
                                 }
                                 QQC2.Label {
                                     Layout.fillWidth: true
-                                    text: i18nc("@info duration and distance of a part of a route", "%1 · %2", leg.modelData.duration, leg.modelData.distance)
+                                    text: leg.modelData.detail
+                                        ?? (leg.modelData.distance.length > 0
+                                            ? i18nc("@info duration and distance of a part of a route", "%1 · %2", leg.modelData.duration, leg.modelData.distance)
+                                            : leg.modelData.duration)
                                     font: Kirigami.Theme.smallFont
                                     color: Kirigami.Theme.disabledTextColor
                                     elide: Text.ElideRight
@@ -325,6 +493,23 @@ ColumnLayout {
                     }
                 }
             }
+        }
+    }
+
+    // The service asks for a visible link to where its timetables come from.
+    QQC2.Label {
+        Layout.fillWidth: true
+        visible: root.transit && RouteController.connections.length > 0 && !RouteController.busy && !root.searching
+        textFormat: Text.StyledText
+        wrapMode: Text.Wrap
+        font: Kirigami.Theme.smallFont
+        color: Kirigami.Theme.disabledTextColor
+        text: i18nc("@info credit; %1 is a link titled Transitous, %2 one titled their sources", "Connections by %1, from %2",
+            "<a href=\"https://transitous.org\">Transitous</a>",
+            "<a href=\"https://transitous.org/sources/\">" + i18nc("@info link title", "these sources") + "</a>")
+        onLinkActivated: link => Qt.openUrlExternally(link)
+        HoverHandler {
+            cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
     }
 

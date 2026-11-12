@@ -10,8 +10,9 @@ SPDX-License-Identifier: CC0-1.0
 # Karten
 
 A simple map for the Plasma desktop: search for a place and plan a route there
-by car, by bicycle or on foot. The map, routing and place search keep working
-without an internet connection for the areas you have downloaded.
+by car, by bicycle, on foot or by public transport. The map, routing and place
+search keep working without an internet connection for the areas you have
+downloaded; public transport needs a connection.
 
 ![Karten showing a route through Berlin, from Schloss Charlottenburg by way of the Brandenburger Tor to the East Side Gallery, with the directions listed beside the map](docs/images/screenshot.png)
 
@@ -35,7 +36,7 @@ Each [release](https://github.com/n4n0GH/Karten/releases) also carries
 Needs Qt 6.6+ (Quick, Positioning, Location, Sql, Network, Concurrent), KDE
 Frameworks 6.8+ (ECM, Kirigami, KI18n, KCoreAddons, KConfig, KColorScheme,
 KWallet),
-KOpeningHours,
+KOpeningHours, KPublicTransport,
 zlib and
 [MapLibre Native Qt](https://github.com/maplibre/maplibre-native-qt) 3.0 with
 its Qt Location plugin.
@@ -117,6 +118,15 @@ Karten uses free community services. Their usage policies shape the design:
   "Google Maps" button in the place panel is separate: it only opens the web
   browser.
 - **routing.openstreetmap.de** (online routes): at most one request per second.
+- **Transitous** (public transport connections, through KPublicTransport): a
+  community-run service for free software that is open source, not
+  commercial and light on its resources; see its
+  [usage policy](https://transitous.org/api/). Requests carry the User-Agent
+  with the project's address, the directions panel links to
+  <https://transitous.org/sources/>, and a request is only made when the
+  start, the destination or the time of a public transport route changes.
+  The policy asks for coordination above about 720 route requests a day
+  across all users, which matters once Karten has many.
 - **Geofabrik** (offline routing data): regional OpenStreetMap extracts.
 
 The service addresses can be changed in `~/.config/kartenrc` (`[Map] Source`,
@@ -126,6 +136,11 @@ To see what the map server inside Karten is asked for, run it with
 `QT_LOGGING_RULES="karten.tileserver.debug=true"`.
 
 ## Known limitations
+
+- Public transport is online only, goes from the start to the destination
+  without the stops in between, and cannot be bent by dragging. Only
+  Transitous is asked, although KPublicTransport knows many operators' own
+  services: each of those has terms of its own.
 
 - Place details are kept for points and simple outlines; places mapped as
   relations (some large buildings and sites) get theirs online only. Regions

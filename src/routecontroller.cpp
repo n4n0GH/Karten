@@ -6,6 +6,7 @@
 #include "extractimporter.h"
 #include "network.h"
 #include "offlinemanager.h"
+#include "transitplanner.h"
 
 #include <KConfigGroup>
 #include <KLocalizedString>
@@ -246,8 +247,20 @@ RouteController::Journey RouteController::parseOsrm(const QByteArray &json)
 RouteController::RouteController(OfflineManager *offline, QObject *parent)
     : QObject(parent)
     , m_offline(offline)
+    , m_transit(new TransitPlanner(this))
 {
     s_instance = this;
+    connect(m_transit, &TransitPlanner::finished, this, [this] {
+        if (m_mode != Transit) {
+            return;
+        }
+        if (!m_transit->errorText().isEmpty()) {
+            setError(m_transit->errorText());
+            return;
+        }
+        m_connections = m_transit->connections();
+        showConnection(0);
+    });
     connect(offline, &OfflineManager::routingRegionsChanged, this, [this] {
         {
             const QMutexLocker lock(&graphCache->mutex);
@@ -356,6 +369,74 @@ QVariantList RouteController::path() const
 QGeoRectangle RouteController::bounds() const
 {
     return m_bounds;
+}
+
+QVariantList RouteController::connections() const
+{
+    return m_connections;
+}
+
+int RouteController::connection() const
+{
+    return m_connection;
+}
+
+void RouteController::setConnection(int connection)
+{
+    if (connection != m_connection && connection >= 0 && connection < m_connections.size()) {
+        showConnection(connection);
+    }
+}
+
+QDateTime RouteController::transitTime() const
+{
+    return m_transitTime;
+}
+
+bool RouteController::arriveBy() const
+{
+    return m_arriveBy;
+}
+
+void RouteController::setTransitTime(const QDateTime &time, bool arriveBy)
+{
+    // Arriving "now" makes no sense; leaving now is what an unset time means.
+    const bool by = arriveBy && time.isValid();
+    if (time == m_transitTime && by == m_arriveBy) {
+        return;
+    }
+    m_transitTime = time;
+    m_arriveBy = by;
+    Q_EMIT transitTimeChanged();
+    if (m_mode == Transit) {
+        recalculate();
+    }
+}
+
+void RouteController::planTransit()
+{
+    // Timetables go from one place to another; stops on the way and detours
+    // are for roads.
+    setBusy(true);
+    m_transit->plan(m_stops.first().coordinate, m_stops.first().name, m_stops.last().coordinate, m_stops.last().name, m_transitTime, m_arriveBy);
+}
+
+void RouteController::showConnection(int connection)
+{
+    const TransitPlanner::Details details = m_transit->details(connection);
+    m_connection = connection;
+    m_path = details.path;
+    m_bounds = details.bounds;
+    m_legs = details.legs;
+    m_durationText = details.duration;
+    m_distanceText = details.distance;
+    // Nothing to take hold of: a connection cannot be bent.
+    m_routePoints.clear();
+    m_waypointPositions.clear();
+    m_isOffline = false;
+    m_errorText.clear();
+    setBusy(false);
+    Q_EMIT routeChanged();
 }
 
 QVariantList RouteController::legs() const
@@ -709,6 +790,8 @@ void RouteController::setError(const QString &error)
 {
     m_path.clear();
     m_legs.clear();
+    m_connections.clear();
+    m_connection = 0;
     m_routePoints.clear();
     m_waypointPositions.clear();
     m_bounds = {};
@@ -736,6 +819,8 @@ void RouteController::setRoute(const Journey &journey, bool offline)
     }
     m_bounds = QGeoRectangle(QGeoCoordinate(north, west), QGeoCoordinate(south, east));
 
+    m_connections.clear();
+    m_connection = 0;
     m_routePoints = journey.path;
     m_waypointPositions.clear();
     for (const Leg &part : journey.legs) {
@@ -824,8 +909,13 @@ void RouteController::recalculate()
         m_cancel->store(true);
         m_cancel.reset();
     }
+    m_transit->clear();
     if (!complete()) {
         setError({});
+        return;
+    }
+    if (m_mode == Transit) {
+        planTransit();
         return;
     }
     const Places places = placesOf(m_stops);

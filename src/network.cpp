@@ -51,6 +51,11 @@ QQmlNetworkAccessManagerFactory *Network::qmlFactory()
     return new Factory;
 }
 
+QNetworkAccessManager *Network::identifyingManager(QObject *parent)
+{
+    return Factory().create(parent);
+}
+
 QNetworkAccessManager *Network::manager()
 {
     static QNetworkAccessManager *instance = nullptr;

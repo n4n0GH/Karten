@@ -30,6 +30,7 @@ C++ objects created in `src/main.cpp` and exposed to QML as singletons.
 | `ExtractImporter` | `src/extractimporter.*` | Turns a downloaded extract into `graph.bin` and `places.sqlite`. A namespace of functions, run on a worker thread. |
 | `Geocoder` | `src/geocoder.*` | Search, reverse lookup, what is at a spot of the map, and details about a place. |
 | `RouteController` | `src/routecontroller.*` | Stops, detours, the planned route and its preview. |
+| `TransitPlanner` | `src/transitplanner.*` | Public transport connections through KPublicTransport. Owned by `RouteController`, not a singleton. |
 | `Appearance` | `src/appearance.*` | Light, dark or system colours, through `KColorSchemeManager`. |
 | `KeyStore` | `src/keystore.*` | Secrets in KWallet. |
 | `Network` | `src/network.*` | One `QNetworkAccessManager` and the User-Agent every request carries. |
@@ -111,6 +112,7 @@ itself (pictures) goes through `Network::qmlFactory()`, which sets the same.
 | OpenFreeMap (or the chosen map source) | `TileServer` | Drawing the map, downloading a map area |
 | Nominatim | `Geocoder` | A submitted search; naming a dropped pin; details of a place outside downloaded regions |
 | routing.openstreetmap.de (OSRM) | `RouteController` | Routes that downloaded data does not cover |
+| Transitous | `TransitPlanner` | A route by public transport: when its start, destination or time changes |
 | Geofabrik | `OfflineManager` | Listing and downloading extracts |
 | Wikidata, Wikipedia | `Geocoder` | A clicked place that links to an article |
 | Google Places API | `Geocoder` | A clicked place, only with consent and a key |

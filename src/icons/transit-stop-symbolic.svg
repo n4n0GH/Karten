@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Karten contributors
+SPDX-License-Identifier: CC0-1.0
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <style type="text/css" id="current-color-scheme">.ColorScheme-Text { color: #232629; }</style>
+  <circle class="ColorScheme-Text" fill="none" stroke="currentColor" stroke-width="1.5" cx="8" cy="8" r="3"/>
+</svg>
