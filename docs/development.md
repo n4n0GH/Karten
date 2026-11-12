@@ -36,6 +36,31 @@ start-up if it exists. With MapLibre installed alongside Qt that does nothing.
 CMake prints `error: No such remote 'origin'` while the repository has no
 remote. It comes from the setup of the clang-format git hook and is harmless.
 
+## Flatpak and releases
+
+`flatpak/io.github.n4n0gh.karten.yml` builds Karten on the KDE runtime. Two
+things the runtime lacks are built first: KOpeningHours, and MapLibre Native
+Qt with the same adjustments as `scripts/build-maplibre.sh`
+(`flatpak/maplibre-qt-location-private.patch` is the one-line change).
+
+```sh
+flatpak-builder --user --install --force-clean build-flatpak flatpak/io.github.n4n0gh.karten.yml
+flatpak run io.github.n4n0gh.karten
+```
+
+The sandbox is given the network, the display, the graphics device, KWallet
+(for the optional Google key) and GeoClue (for "Show My Location"), and no
+access to files. Data ends up under `~/.var/app/io.github.n4n0gh.karten/`.
+
+`.github/workflows/flatpak.yml` runs that build when a release is published on
+GitHub and attaches `karten.flatpak` to the release. It can also be started
+by hand from the Actions page. When moving to a newer KDE runtime, change
+`runtime-version` in the manifest and the container image in the workflow
+together.
+
+To publish a version: set it in `CMakeLists.txt` and add a `<release>` to the
+metainfo file, commit, tag, and publish a release for the tag on GitHub.
+
 ## Tests
 
 ```sh

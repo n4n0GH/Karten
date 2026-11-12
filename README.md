@@ -35,6 +35,10 @@ ctest --test-dir build
 ./build/bin/karten
 ```
 
+A Flatpak can be built with
+`flatpak-builder --user --install --force-clean build-flatpak flatpak/io.github.n4n0gh.karten.yml`;
+published releases carry one as `karten.flatpak`.
+
 The map needs OpenGL; Karten selects it and Qt's single-threaded render loop
 itself, as the MapLibre plugin asks for.
 

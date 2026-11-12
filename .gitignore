@@ -7,4 +7,5 @@
 .kdev4/
 CMakeLists.txt.user*
 .flatpak-builder/
+/build-flatpak/
 /.clang-format

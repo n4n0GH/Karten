@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 Karten contributors
+# SPDX-License-Identifier: CC0-1.0
+#
+# Builds Karten as a Flatpak bundle when a release is published and attaches
+# the bundle to the release. Can also be started by hand from the Actions
+# page; the bundle is then available as an artifact of the run.
+
+name: Flatpak
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  flatpak:
+    name: Build Flatpak bundle
+    runs-on: ubuntu-latest
+    container:
+      # Has flatpak-builder and the KDE runtime of this version; keep in step
+      # with runtime-version in the manifest.
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: karten.flatpak
+          manifest-path: flatpak/io.github.n4n0gh.karten.yml
+          # MapLibre takes a while to build; reuse it as long as the manifest
+          # is unchanged.
+          cache-key: flatpak-builder-${{ hashFiles('flatpak/**') }}
+
+      - name: Attach the bundle to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: karten.flatpak
+          fail_on_unmatched_files: true

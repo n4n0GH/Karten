@@ -1,0 +1,18 @@
+SPDX-FileCopyrightText: 2026 Karten contributors
+SPDX-License-Identifier: BSD-2-Clause
+
+Since Qt 6.9 the private modules have to be asked for by name.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 46f5cd3..2001d90 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -61,7 +61,7 @@ if(NOT MLN_QT_WITH_INTERNAL_SQLITE)
+     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Sql REQUIRED)
+ endif()
+ if(MLN_QT_WITH_LOCATION)
+-    find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Location REQUIRED) # location
++    find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Location LocationPrivate REQUIRED) # location
+ endif()
+ if(MLN_QT_WITH_WIDGETS)
+     if(Qt6_FOUND)

@@ -103,7 +103,7 @@ uses Qt's `Settings` type. Keys:
 ## Online services
 
 Every request goes through `Network::request()`, which sets the User-Agent
-`Karten/<version> (KDE desktop maps application)`. What the interface loads by
+`Karten/<version> (+https://github.com/n4n0gh/karten)`. What the interface loads by
 itself (pictures) goes through `Network::qmlFactory()`, which sets the same.
 
 | Service | Used by | When |

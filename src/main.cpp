@@ -51,6 +51,8 @@ int main(int argc, char **argv)
                      i18nc("@info:credit", "© 2026 Karten contributors"));
     about.setLicense(KAboutLicense::GPL_V3, KAboutLicense::OrLaterVersions);
     about.setDesktopFileName(u"io.github.n4n0gh.karten"_s);
+    about.setHomepage(u"https://github.com/n4n0gh/karten"_s);
+    about.setBugAddress("https://github.com/n4n0gh/karten/issues");
     about.setOtherText(i18nc("@info",
                              "Map data © OpenStreetMap contributors, available under the Open Database License. "
                              "The map is provided by OpenFreeMap and drawn by MapLibre. "

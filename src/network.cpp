@@ -15,9 +15,9 @@ namespace
 {
 QString userAgent()
 {
-    // The services ask for a stable identifier that names the application.
-    // Add a contact URL here once the project has a public home.
-    return u"Karten/" KARTEN_VERSION_STRING " (KDE desktop maps application)"_s;
+    // The services ask for a stable identifier that names the application
+    // and says where its makers can be reached.
+    return u"Karten/" KARTEN_VERSION_STRING " (+https://github.com/n4n0gh/karten)"_s;
 }
 
 class IdentifyingManager : public QNetworkAccessManager

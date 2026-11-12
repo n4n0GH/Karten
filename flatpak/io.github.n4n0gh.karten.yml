@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: 2026 Karten contributors
+# SPDX-License-Identifier: CC0-1.0
+#
+# Builds Karten as a Flatpak:
+#
+#   flatpak-builder --user --install --force-clean build-flatpak flatpak/io.github.n4n0gh.karten.yml
+#   flatpak run io.github.n4n0gh.karten
+
+id: io.github.n4n0gh.karten
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+command: karten
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  # The map is drawn with OpenGL.
+  - --device=dri
+  # Map, search, routing and downloads.
+  - --share=network
+  # The key for Google's Places API, for those who use that.
+  - --talk-name=org.kde.kwalletd6
+  # "Show My Location".
+  - --system-talk-name=org.freedesktop.GeoClue2
+
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
+  - /mkspecs
+  - /share/doc
+  - '*.a'
+
+modules:
+  # Understands OpenStreetMap's notation for opening hours.
+  - name: kopeninghours
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTING=OFF
+      # It still builds for Qt 5 unless told otherwise.
+      - -DBUILD_WITH_QT6=ON
+      - -DQT_MAJOR_VERSION=6
+    sources:
+      - type: archive
+        url: https://download.kde.org/stable/release-service/26.08.3/src/kopeninghours-26.08.3.tar.xz
+        sha256: 0d785277e38bf37e1bed5d85749c48f7fc228a3f94b995236f4bf52db445241a
+
+  # Draws the map.
+  - name: maplibre-native-qt
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      # MapLibre treats warnings as errors, and current compilers have new ones.
+      - -DMLN_WITH_WERROR=OFF
+      # Some of its files rely on <cstdint> being included by others.
+      - -DCMAKE_CXX_FLAGS=-include cstdint
+    sources:
+      # The release archive rather than the repository: with all of its
+      # submodules and their history that comes to several gigabytes.
+      - type: archive
+        url: https://github.com/maplibre/maplibre-native-qt/releases/download/v3.0.0/maplibre-native-qt_v3.0.0_Source.tar.bz2
+        sha256: 9689fb0630adc33a34ea476bdf53a3ef7dc76cb3c95da9de056081f9330a9355
+      - type: patch
+        path: maplibre-qt-location-private.patch
+    cleanup:
+      - /lib/libQMapLibreWidgets.so*
+
+  - name: karten
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTING=OFF
+    sources:
+      - type: dir
+        path: ..
