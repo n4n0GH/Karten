@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Karten contributors
+SPDX-License-Identifier: CC0-1.0
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <style type="text/css" id="current-color-scheme">.ColorScheme-Text { color: #232629; }</style>
+  <g fill="none" class="ColorScheme-Text" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="3.75" cy="10.5" r="2.75"/>
+    <circle cx="12.25" cy="10.5" r="2.75"/>
+    <path d="M3.75 10.5 6.25 6h4.25l1.75 4.5M6.25 6 8 10.5 10.5 6M5.1 4.5h1.9M10.5 6 9.9 4h1.6"/>
+  </g>
+</svg>

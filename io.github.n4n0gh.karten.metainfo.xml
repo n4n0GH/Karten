@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Karten contributors
+SPDX-License-Identifier: CC0-1.0
+-->
+<component type="desktop-application">
+  <id>io.github.n4n0gh.karten</id>
+  <name>Karten</name>
+  <summary>Maps and route planning that also work offline</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.n4n0gh">
+    <name>Karten contributors</name>
+  </developer>
+  <description>
+    <p>Karten is a simple map for the Plasma desktop. Search for a place, and plan a route there by car, by bicycle or on foot.</p>
+    <p>Download a region to keep planning routes and finding places without an internet connection. Map data comes from OpenStreetMap.</p>
+  </description>
+  <launchable type="desktop-id">io.github.n4n0gh.karten.desktop</launchable>
+  <categories>
+    <category>Education</category>
+    <category>Geography</category>
+    <category>Maps</category>
+  </categories>
+  <provides>
+    <binary>karten</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-12"/>
+  </releases>
+</component>

@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Karten contributors
+# SPDX-License-Identifier: CC0-1.0
+[Desktop Entry]
+Type=Application
+Name=Karten
+GenericName=Maps
+Comment=Maps and route planning that also work offline
+Exec=karten
+Icon=io.github.n4n0gh.karten
+Terminal=false
+Categories=Qt;KDE;Education;Geography;Maps;
+Keywords=map;maps;navigation;route;directions;offline;OpenStreetMap;OSM;

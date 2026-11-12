@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Karten contributors
+SPDX-License-Identifier: CC0-1.0
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a8e0a0"/>
+      <stop offset="1" stop-color="#6cc070"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="6" width="40" height="36" rx="5" fill="url(#land)"/>
+  <path d="M4 30c8-6 14 4 22-2s12-8 18-6v15a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" fill="#5fb0e8"/>
+  <path d="M14 6l-4 36M31 6l5 36" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+  <path d="M6 20c10-3 14 6 24 3s9-9 14-9" stroke="#fdfdfd" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M6 20c10-3 14 6 24 3s9-9 14-9" stroke="#f0a020" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M30 4c-4.4 0-8 3.5-8 7.9 0 5.6 8 13.100 8 13.100s8-7.500 8-13.100C38 7.500 34.400 4 30 4z" fill="#e23b3b" stroke="#a21f1f" stroke-width="1"/>
+  <circle cx="30" cy="12" r="3" fill="#ffffff"/>
+</svg>
