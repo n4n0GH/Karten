@@ -19,6 +19,17 @@ Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributor
 the map is provided by [OpenFreeMap](https://openfreemap.org) and drawn by
 [MapLibre](https://maplibre.org).
 
+## Installing
+
+```sh
+flatpak install --user https://n4n0gh.github.io/Karten/karten.flatpakref
+```
+
+or open <https://n4n0gh.github.io/Karten/> and choose *Install Karten*.
+Installed this way, Karten is updated together with your other applications.
+Each [release](https://github.com/n4n0GH/Karten/releases) also carries
+`karten.flatpak` as a single file to download; it updates from the same place.
+
 ## Building
 
 Needs Qt 6.6+ (Quick, Positioning, Location, Sql, Network, Concurrent), KDE
@@ -42,8 +53,7 @@ ctest --test-dir build
 ```
 
 A Flatpak can be built with
-`flatpak-builder --user --install --force-clean build-flatpak flatpak/io.github.n4n0gh.karten.yml`;
-published releases carry one as `karten.flatpak`.
+`flatpak-builder --user --install --force-clean build-flatpak flatpak/io.github.n4n0gh.karten.yml`.
 
 The map needs OpenGL; Karten selects it and Qt's single-threaded render loop
 itself, as the MapLibre plugin asks for.

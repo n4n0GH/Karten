@@ -1,9 +1,12 @@
 # SPDX-FileCopyrightText: 2026 Karten contributors
 # SPDX-License-Identifier: CC0-1.0
 #
-# Builds Karten as a Flatpak bundle when a release is published and attaches
-# the bundle to the release. Can also be started by hand from the Actions
-# page; the bundle is then available as an artifact of the run.
+# Builds Karten as a Flatpak when a release is published, attaches the bundle
+# to the release, and publishes the Flatpak repository that installed copies
+# update from (served by GitHub Pages).
+#
+# Can also be started by hand from the Actions page. The bundle is then an
+# artifact of the run; the repository is only published when asked to.
 
 name: Flatpak
 
@@ -11,14 +14,22 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish this build to the Flatpak repository that users update from
+        type: boolean
+        default: false
 
-permissions:
-  contents: write
+env:
+  # Where GitHub Pages serves the repository. Installed copies remember it.
+  SITE_URL: https://n4n0gh.github.io/Karten
 
 jobs:
-  flatpak:
-    name: Build Flatpak bundle
+  build:
+    name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     container:
       # Has flatpak-builder and the KDE runtime of this version; keep in step
       # with runtime-version in the manifest.
@@ -31,9 +42,25 @@ jobs:
         with:
           bundle: karten.flatpak
           manifest-path: flatpak/io.github.n4n0gh.karten.yml
+          branch: stable
+          upload-artifact: false
           # MapLibre takes a while to build; reuse it as long as the manifest
           # is unchanged.
           cache-key: flatpak-builder-${{ hashFiles('flatpak/**') }}
+
+      # Replaces the bundle with one that updates from the repository, and
+      # prepares the repository for publishing. Signed if the secret is set.
+      - name: Prepare repository and bundle
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}
+        run: |
+          rm -f karten.flatpak
+          flatpak/make-site.sh repo site "$SITE_URL" stable
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: karten-flatpak
+          path: karten.flatpak
 
       - name: Attach the bundle to the release
         if: github.event_name == 'release'
@@ -41,3 +68,22 @@ jobs:
         with:
           files: karten.flatpak
           fail_on_unmatched_files: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    name: Publish repository
+    if: github.event_name == 'release' || inputs.publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

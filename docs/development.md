@@ -53,10 +53,30 @@ The sandbox is given the network, the display, the graphics device, KWallet
 access to files. Data ends up under `~/.var/app/io.github.n4n0gh.karten/`.
 
 `.github/workflows/flatpak.yml` runs that build when a release is published on
-GitHub and attaches `karten.flatpak` to the release. It can also be started
-by hand from the Actions page. When moving to a newer KDE runtime, change
-`runtime-version` in the manifest and the container image in the workflow
-together.
+GitHub and then:
+
+- publishes the result as a Flatpak repository on GitHub Pages
+  (<https://n4n0gh.github.io/Karten/>), which installed copies update from;
+- attaches `karten.flatpak` to the release, a bundle that remembers that
+  repository and updates from it as well.
+
+`flatpak/make-site.sh` does the second half: it writes the repository's
+summary, the `karten.flatpakref` and `karten.flatpakrepo` files and a small
+page, and builds the bundle. Each publication replaces the repository with
+the new version alone; that is all an update needs.
+
+The workflow can also be started by hand from the Actions page, with a tick
+box for publishing. Without it the bundle is only an artifact of the run.
+
+When the repository secret `FLATPAK_GPG_PRIVATE_KEY` holds the secret key of a
+GPG key (ASCII-armoured, without a passphrase), everything is signed with it
+and the install files carry the public key, so Flatpak verifies what it
+downloads. Without the secret the repository is unsigned and clients rely on
+HTTPS alone. Switching from one to the other makes users add the repository
+again, so decide before publishing widely.
+
+When moving to a newer KDE runtime, change `runtime-version` in the manifest
+and the container image in the workflow together.
 
 To publish a version: set it in `CMakeLists.txt` and add a `<release>` to the
 metainfo file, commit, tag, and publish a release for the tag on GitHub.
