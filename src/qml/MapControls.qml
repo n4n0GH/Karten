@@ -22,6 +22,9 @@ Column {
             action: modelData
             visible: modelData.visible
             display: QQC2.AbstractButton.IconOnly
+            // Reachable with the keyboard, but a click does not leave the
+            // button looking selected: that look is for switches that are on.
+            focusPolicy: Qt.TabFocus
             implicitWidth: Kirigami.Units.gridUnit * 2
             implicitHeight: Kirigami.Units.gridUnit * 2
             QQC2.ToolTip.text: text

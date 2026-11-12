@@ -102,8 +102,8 @@ Kirigami.Page {
     function directionsTo(target: var): void {
         directionsMode = true;
         RouteController.setTo(QtPositioning.coordinate(target.latitude, target.longitude), target.title);
-        if (!RouteController.from.isValid && positionSource.position.coordinate.isValid) {
-            RouteController.setFrom(positionSource.position.coordinate, i18nc("@item start of a route", "My Location"));
+        if (!RouteController.from.isValid && myLocation.isValid) {
+            RouteController.setFrom(myLocation, i18nc("@item start of a route", "My Location"));
         }
         place = null;
     }
@@ -208,9 +208,14 @@ Kirigami.Page {
         property real zoomLevel: 4.5
     }
 
+    /// Where the system says it is, while showing that is switched on;
+    /// otherwise not a valid coordinate.
+    readonly property geoCoordinate myLocation: locateAction.checked ? positionSource.position.coordinate : QtPositioning.coordinate()
+
     PositionSource {
         id: positionSource
-        active: false
+        // Only asks for the location while the user wants it shown.
+        active: locateAction.checked
         updateInterval: 2000
         onPositionChanged: {
             if (page.centreOnPosition && position.coordinate.isValid && page.map) {
@@ -291,20 +296,25 @@ Kirigami.Page {
             page.map.tilt = 0;
         }
     }
+    // A switch: while it is on, the location is followed and shown on the
+    // map; switching it off stops asking for it and takes it off the map.
     Kirigami.Action {
         id: locateAction
         text: i18nc("@action:button", "Show My Location")
         icon.name: "gps-symbolic"
         shortcut: "Ctrl+L"
         visible: positionSource.valid
-        onTriggered: {
-            if (positionSource.position.coordinate.isValid) {
+        checkable: true
+        onCheckedChanged: on => {
+            if (!on) {
+                page.centreOnPosition = false;
+            } else if (positionSource.position.coordinate.isValid) {
+                // Known from last time; go there while waiting for news.
                 page.map.center = positionSource.position.coordinate;
                 page.map.zoomLevel = Math.max(page.map.zoomLevel, 15);
             } else {
                 page.centreOnPosition = true;
             }
-            positionSource.active = true;
         }
     }
     Shortcut {
@@ -521,8 +531,8 @@ Kirigami.Page {
             }
             MapQuickItem {
                 id: positionMarker
-                coordinate: positionSource.position.coordinate
-                visible: positionSource.active && positionSource.position.coordinate.isValid
+                coordinate: page.myLocation
+                visible: page.myLocation.isValid
                 anchorPoint.x: halo.width / 2
                 anchorPoint.y: halo.height / 2
                 sourceItem: Rectangle {
@@ -729,7 +739,7 @@ Kirigami.Page {
         mapCenter: page.map ? page.map.center : QtPositioning.coordinate(0, 0)
         place: page.place
         directionsMode: page.directionsMode
-        myLocation: positionSource.position.coordinate
+        myLocation: page.myLocation
         directionsAction: openDirectionsAction
 
         onPlaceChosen: chosen => page.showPlace(chosen)
