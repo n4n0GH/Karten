@@ -41,6 +41,17 @@ if [ -n "${GPG_PRIVATE_KEY:-}" ]; then
     bundle_key="--gpg-keys=$GNUPGHOME/public.gpg"
     # shellcheck disable=SC2086
     flatpak build-sign "$repo" "$app" "$branch" $sign
+    # Translations and debug symbols are published as parts of their own,
+    # and are refused by clients unless signed as well.
+    for part in Locale Debug; do
+        if ls "$repo/refs/heads/runtime/$app.$part"/*/"$branch" > /dev/null 2>&1; then
+            # shellcheck disable=SC2086
+            flatpak build-sign --runtime "$repo" "$app.$part" "$branch" $sign
+        fi
+    done
+    # The description that software centres show is a branch too. Dropping
+    # it makes the next step write it anew, signed.
+    rm -rf "$repo/refs/heads/appstream" "$repo/refs/heads/appstream2"
 fi
 
 # The summary is what clients read to learn what the repository offers.

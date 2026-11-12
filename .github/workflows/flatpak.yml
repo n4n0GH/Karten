@@ -44,9 +44,9 @@ jobs:
           manifest-path: flatpak/io.github.n4n0gh.karten.yml
           branch: stable
           upload-artifact: false
-          # MapLibre takes a while to build; reuse it as long as the manifest
+          # MapLibre takes a while to build; reuse it as long as what is built
           # is unchanged.
-          cache-key: flatpak-builder-${{ hashFiles('flatpak/**') }}
+          cache-key: flatpak-builder-${{ hashFiles('flatpak/*.yml', 'flatpak/*.patch') }}
 
       # Replaces the bundle with one that updates from the repository, and
       # prepares the repository for publishing. Signed if the secret is set.
