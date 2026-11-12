@@ -25,6 +25,12 @@ SPDX-License-Identifier: CC0-1.0
     <category>Geography</category>
     <category>Maps</category>
   </categories>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A route through Berlin with its directions</caption>
+      <image>https://raw.githubusercontent.com/n4n0GH/Karten/main/docs/images/screenshot.png</image>
+    </screenshot>
+  </screenshots>
   <provides>
     <binary>karten</binary>
   </provides>

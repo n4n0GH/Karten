@@ -3,11 +3,17 @@ SPDX-FileCopyrightText: 2026 Karten contributors
 SPDX-License-Identifier: CC0-1.0
 -->
 
+<p align="center">
+  <img src="icons/io.github.n4n0gh.karten.svg" width="128" height="128" alt="">
+</p>
+
 # Karten
 
 A simple map for the Plasma desktop: search for a place and plan a route there
 by car, by bicycle or on foot. The map, routing and place search keep working
 without an internet connection for the areas you have downloaded.
+
+![Karten showing a route through Berlin, from Schloss Charlottenburg by way of the Brandenburger Tor to the East Side Gallery, with the directions listed beside the map](docs/images/screenshot.png)
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors;
 the map is provided by [OpenFreeMap](https://openfreemap.org) and drawn by
