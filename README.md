@@ -14,7 +14,7 @@ by car, by bicycle, on foot or by public transport. The map, routing and place
 search keep working without an internet connection for the areas you have
 downloaded; public transport needs a connection.
 
-![Karten showing a route through Berlin, from Schloss Charlottenburg by way of the Brandenburger Tor to the East Side Gallery, with the directions listed beside the map](docs/images/screenshot.png)
+![Karten showing a public transport connection through Berlin, from Schloss Charlottenburg to the East Side Gallery: a choice of connections with their times and changes beside the map, and the chosen one drawn on it](docs/images/screenshot.png)
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors;
 the map is provided by [OpenFreeMap](https://openfreemap.org) and drawn by
