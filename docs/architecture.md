@@ -32,6 +32,7 @@ C++ objects created in `src/main.cpp` and exposed to QML as singletons.
 | `RouteController` | `src/routecontroller.*` | Stops, detours, the planned route and its preview. |
 | `TransitPlanner` | `src/transitplanner.*` | Public transport connections through KPublicTransport. Owned by `RouteController`, not a singleton. |
 | `Appearance` | `src/appearance.*` | Light, dark or system colours, through `KColorSchemeManager`. |
+| `DesktopColors` | `src/desktopcolors.*` | In a Flatpak, the desktop's colours when they change while Karten runs. Made in `main()`, not known to QML. |
 | `KeyStore` | `src/keystore.*` | Secrets in KWallet. |
 | `Network` | `src/network.*` | One `QNetworkAccessManager` and the User-Agent every request carries. |
 

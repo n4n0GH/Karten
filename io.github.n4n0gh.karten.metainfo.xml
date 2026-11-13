@@ -36,6 +36,11 @@ SPDX-License-Identifier: CC0-1.0
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.2.1" date="2026-11-13">
+      <description>
+        <p>Installed as a Flatpak, Karten now follows the desktop's colours when they change while it runs, and shows the icons of Plasma's global theme.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-12">
       <description>
         <p>Routes by public transport: choose when to leave or arrive, pick one of several connections, and see its rides, changes and walks with their times. Connections come from Transitous and need an internet connection.</p>

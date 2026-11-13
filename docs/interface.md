@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC0-1.0
 
 # Interface
 
-Files: `src/qml/`, `src/appearance.*`, `src/icons/`.
+Files: `src/qml/`, `src/appearance.*`, `src/desktopcolors.*`, `src/icons/`.
 
 The interface follows the Kirigami design guide the project uses
 (<https://n4n0gh.github.io/Doku/>): colours from `Kirigami.Theme` only,
@@ -103,6 +103,15 @@ their own logic live in C++:
 - `Appearance.scheme`: follow the system, light or dark. Implemented with
   `KColorSchemeManager`, which activates Breeze Light or Breeze Dark for this
   application and remembers the choice itself.
+
+  In a Flatpak, following the system needs help when the desktop's colours
+  change while Karten runs (a switch between a light and a dark theme): the
+  sandbox keeps the `kdeglobals` it started with, and Kirigami's style reads
+  its colours from that file. `DesktopColors` listens to the settings portal,
+  writes the colours it has as a colour scheme file in the cache directory
+  and names it to the application in place of `kdeglobals`. While light or
+  dark is chosen the file is only kept, and `Appearance` has it applied when
+  the setting goes back to following the system.
 - `TileServer.source`: the map, see [The map](map.md).
 - `KeyStore`: see [Places](places.md).
 
@@ -114,6 +123,12 @@ ships its own in `src/icons/`: `travel-{drive,cycle,walk}-symbolic` and
 `:/icons/hicolor/scalable/actions/`, where the icon loader finds them by name
 like any other, and they carry Breeze's `ColorScheme-Text` style sheet so that
 they take on the colour of the colour scheme.
+
+In a Flatpak the icon theme of Plasma's global theme would not be found: it
+is named in `~/.config/kdedefaults/kdeglobals`, which Plasma lists in
+`XDG_CONFIG_DIRS`, and Flatpak sets that variable anew. The manifest lets the
+folder be read, and `main()` puts it first in `XDG_CONFIG_DIRS` before the
+application object exists.
 
 The left-turn icons are the right-turn ones mirrored by a transform in the
 SVG; draw a new turn icon for a right turn, stem at the bottom.

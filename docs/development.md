@@ -67,10 +67,12 @@ ctest --test-dir build --output-on-failure
   garbage input is rejected.
 - `autotests/vectortiletest.cpp`: decodes a tile put together by hand, feeds
   the decoder garbage, and unpacks gzip.
+- `autotests/desktopcolorstest.cpp`: the colour scheme file written from what
+  the settings portal has (see [Interface](interface.md)).
 - `appstreamtest`: validates the metainfo file.
 
-Only `src/core` has unit tests. The services and the interface are tested by
-running the application.
+Apart from that only `src/core` has unit tests. The services and the interface
+are tested by running the application.
 
 ## Running and debugging
 

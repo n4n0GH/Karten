@@ -20,6 +20,10 @@ finish-args:
   - --device=dri
   # Map, search, routing and downloads.
   - --share=network
+  # The settings of Plasma's global theme (the icon theme, say), which are not
+  # in kdeglobals (that one the runtime lets be read); main.cpp has KDE's
+  # libraries look here.
+  - --filesystem=xdg-config/kdedefaults:ro
   # The key for Google's Places API, for those who use that.
   - --talk-name=org.kde.kwalletd6
   # "Show My Location".

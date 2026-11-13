@@ -26,6 +26,8 @@ add_executable(karten
     main.cpp
     appearance.cpp
     appearance.h
+    desktopcolors.cpp
+    desktopcolors.h
     extractimporter.cpp
     extractimporter.h
     geocoder.cpp
@@ -101,6 +103,7 @@ target_compile_definitions(karten PRIVATE
 target_link_libraries(karten PRIVATE
     kartencore
     Qt6::Concurrent
+    Qt6::DBus
     Qt6::Gui
     Qt6::Network
     Qt6::Positioning
