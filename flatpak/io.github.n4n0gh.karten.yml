@@ -28,6 +28,8 @@ finish-args:
   - --talk-name=org.kde.kwalletd6
   # "Show My Location".
   - --system-talk-name=org.freedesktop.GeoClue2
+  # Printing a route.
+  - --socket=cups
 
 cleanup:
   - /include

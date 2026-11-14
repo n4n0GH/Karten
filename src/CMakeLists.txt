@@ -38,6 +38,12 @@ add_executable(karten
     network.h
     offlinemanager.cpp
     offlinemanager.h
+    printmap.cpp
+    printmap.h
+    roadbook.cpp
+    roadbook.h
+    roadbookdocument.cpp
+    roadbookdocument.h
     routecontroller.cpp
     routecontroller.h
     tileserver.cpp
@@ -107,6 +113,7 @@ target_link_libraries(karten PRIVATE
     Qt6::Gui
     Qt6::Network
     Qt6::Positioning
+    Qt6::PrintSupport
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

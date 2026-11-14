@@ -12,7 +12,9 @@ SPDX-License-Identifier: CC0-1.0
 A simple map for the Plasma desktop: search for a place and plan a route there
 by car, by bicycle, on foot or by public transport. The map, routing and place
 search keep working without an internet connection for the areas you have
-downloaded; public transport needs a connection.
+downloaded; public transport needs a connection. A route by road can be
+printed as a roadbook: every instruction with its distance from the start and
+a small map of the junction that points the way you are going.
 
 ![Karten showing a public transport connection through Berlin, from Schloss Charlottenburg to the East Side Gallery: a choice of connections with their times and changes beside the map, and the chosen one drawn on it](docs/images/screenshot.png)
 
@@ -33,7 +35,8 @@ Each [release](https://github.com/n4n0GH/Karten/releases) also carries
 
 ## Building
 
-Needs Qt 6.6+ (Quick, Positioning, Location, Sql, Network, Concurrent), KDE
+Needs Qt 6.6+ (Quick, Positioning, Location, Sql, Network, Concurrent,
+PrintSupport), KDE
 Frameworks 6.8+ (ECM, Kirigami, KI18n, KCoreAddons, KConfig, KColorScheme,
 KWallet),
 KOpeningHours, KPublicTransport,
@@ -72,6 +75,7 @@ code in detail.
 | Search | `src/geocoder.*` | Downloaded regions while typing; Nominatim when a query is submitted. |
 | Places on the map | `src/core/vectortile.*`, `Geocoder::placeAt`, `Geocoder::lookUpDetails` | A click is matched against the points of interest in the stored vector tile under it, so it works offline. Address, opening hours and the like come from the downloaded region the place lies in, or else from Nominatim; a linked Wikipedia article adds a summary and a picture. |
 | Routes | `src/routecontroller.*` | Downloaded data when it covers both ends, otherwise the FOSSGIS OSRM server. |
+| Printing | `src/roadbook.*`, `src/roadbookdocument.*`, `src/printmap.*` | The route as a roadbook. Its maps are drawn from the vector tiles with a painter, in a style for paper, and turned to face the direction of travel. |
 | Interface | `src/qml` | Kirigami. |
 
 `karten-route` is a developer tool that builds a graph from a `.osm.pbf` file
@@ -90,6 +94,8 @@ Karten uses free community services. Their usage policies shape the design:
   3,000 tiles or 50 MB each, with at most 4 parallel requests and an
   identifying User-Agent. Karten enforces both limits per download (an area of
   roughly 70 km across at full detail) and uses 2 parallel requests.
+  Printing a route fetches the tiles under its maps the same way: 2 requests
+  at a time, and never more than the limit of one download.
 - The map choice *Automatic* shows OpenFreeMap's standard map with light
   colours and its dark map with dark colours. Both draw from the same vector
   tiles, which are stored once; an offline download also fetches the icons,
@@ -150,6 +156,10 @@ To see what the map server inside Karten is asked for, run it with
   labels in other scripts appear offline only where they were looked at before.
 - The map loads while its window is being drawn, so nothing is fetched while
   the window is hidden.
+
+- Only routes by road are printed, not public transport connections. The
+  maps of a roadbook need a vector map in the OpenMapTiles schema, which the
+  default map is; with another map source they show the route on white.
 
 - The offline router ignores turn restrictions, barriers and live traffic, and
   snaps start and destination to the nearest road node.

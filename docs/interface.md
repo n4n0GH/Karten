@@ -41,7 +41,7 @@ reaching the map.
 | `MapPage.qml` | The page: actions and shortcuts, the map view and its items, zooming, clicks and drags on the map, and the floating cards. The largest file. |
 | `SidePanel.qml` | The card at the top left: search field and results, or `DirectionsView`. |
 | `SearchResults.qml` | The result list, shared by search and directions. |
-| `DirectionsView.qml` | Travel mode, stops, when to travel and the connections to choose from (public transport), totals and the legs with their steps. |
+| `DirectionsView.qml` | Travel mode, stops, when to travel and the connections to choose from (public transport), totals with the button to print the route, and the legs with their steps. |
 | `StopList.qml` | The stops as text fields that can be dragged into another order. |
 | `PlacePanel.qml` | The selected place: title, buttons, article, details, reviews. Scrolls when the window is short. |
 | `ZoomControl.qml` | Zoom out, slider, zoom in, percentage. |
@@ -51,6 +51,9 @@ reaching the map.
 | `SettingsPage.qml` | Colours, map source, zoom bar, Google. |
 | `Preferences.qml` | Singleton with the options chosen in the settings. |
 | `CardBackground.qml` | Background of the floating cards. |
+
+The print preview is the one window that is not QML: Qt's
+`QPrintPreviewDialog`, opened by `Roadbook`. See [Printing](printing.md).
 
 ## State in MapPage
 

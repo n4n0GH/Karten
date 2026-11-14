@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-project(karten VERSION 0.2.1 LANGUAGES CXX)
+project(karten VERSION 0.3.0 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.6.0")
 set(KF_MIN_VERSION "6.8.0")
@@ -37,6 +37,7 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Gui
     Network
     Positioning
+    PrintSupport
     Qml
     Quick
     QuickControls2

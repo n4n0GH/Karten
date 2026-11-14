@@ -234,6 +234,15 @@ Kirigami.Page {
         onTriggered: page.directionsMode = true
     }
     Kirigami.Action {
+        id: printRouteAction
+        text: i18nc("@action:inmenu", "Print Route…")
+        icon.name: "document-print-symbolic"
+        shortcut: StandardKey.Print
+        // Routes by road; a public transport connection has no roadbook.
+        enabled: Roadbook.available && !Roadbook.busy
+        onTriggered: Roadbook.print(page.Window.window)
+    }
+    Kirigami.Action {
         id: downloadAction
         text: i18nc("@action:inmenu", "Download Visible Area…")
         icon.name: "download-symbolic"
@@ -741,6 +750,7 @@ Kirigami.Page {
         directionsMode: page.directionsMode
         myLocation: page.myLocation
         directionsAction: openDirectionsAction
+        printAction: printRouteAction
 
         onPlaceChosen: chosen => page.showPlace(chosen)
         onPlaceDismissed: page.place = null
@@ -797,7 +807,7 @@ Kirigami.Page {
             QQC2.Menu {
                 id: menu
                 Repeater {
-                    model: [downloadAction, offlineMapsAction, settingsAction, reportAction, aboutAction]
+                    model: [printRouteAction, downloadAction, offlineMapsAction, settingsAction, reportAction, aboutAction]
                     QQC2.MenuItem {
                         required property Kirigami.Action modelData
                         action: modelData

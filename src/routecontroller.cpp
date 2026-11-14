@@ -432,6 +432,7 @@ void RouteController::showConnection(int connection)
     m_distanceText = details.distance;
     // Nothing to take hold of: a connection cannot be bent.
     m_routePoints.clear();
+    m_parts.clear();
     m_waypointPositions.clear();
     m_isOffline = false;
     m_errorText.clear();
@@ -462,6 +463,11 @@ bool RouteController::offline() const
 QString RouteController::errorText() const
 {
     return m_errorText;
+}
+
+RouteController::Itinerary RouteController::itinerary() const
+{
+    return {m_routePoints, m_parts};
 }
 
 QString RouteController::formatDistance(double metres)
@@ -793,6 +799,7 @@ void RouteController::setError(const QString &error)
     m_connections.clear();
     m_connection = 0;
     m_routePoints.clear();
+    m_parts.clear();
     m_waypointPositions.clear();
     m_bounds = {};
     m_distanceText.clear();
@@ -864,6 +871,7 @@ void RouteController::setRoute(const Journey &journey, bool offline)
     }
 
     m_legs.clear();
+    m_parts.clear();
     double distance = 0;
     double duration = 0;
     for (size_t index = 0; index < legs.size(); ++index) {
@@ -871,13 +879,18 @@ void RouteController::setRoute(const Journey &journey, bool offline)
         // Each leg ends at the stop after the one it starts from.
         const QString target = m_stops.value(qsizetype(index) + 1).name;
         const bool last = index + 1 == legs.size();
+        const QString title =
+            target.isEmpty() ? i18nc("@title part of a route", "Directions") : i18nc("@title part of a route; %1 is a place", "To %1", target);
+        Part part{title, leg.distance, leg.duration, {}};
         QVariantList steps;
         for (const Maneuver &m : leg.maneuvers) {
-            const GeoPoint at = journey.path[std::min<size_t>(m.pathIndex, journey.path.size() - 1)];
+            const quint32 pathIndex = quint32(std::min<size_t>(m.pathIndex, journey.path.size() - 1));
+            const GeoPoint at = journey.path[pathIndex];
             QString text = describe(m);
             if (m.type == Maneuver::Arrive && !last && !target.isEmpty()) {
                 text = i18nc("route instruction; %1 is a stop on the way", "Arrive at %1", target);
             }
+            part.steps.push_back({m.type, text, m.street, m.type == Maneuver::Arrive ? 0 : m.distance, pathIndex});
             steps.append(QVariantMap{
                 {u"text"_s, text},
                 {u"distance"_s, m.type == Maneuver::Arrive ? QString() : formatDistance(m.distance)},
@@ -887,11 +900,12 @@ void RouteController::setRoute(const Journey &journey, bool offline)
             });
         }
         m_legs.append(QVariantMap{
-            {u"title"_s, target.isEmpty() ? i18nc("@title part of a route", "Directions") : i18nc("@title part of a route; %1 is a place", "To %1", target)},
+            {u"title"_s, title},
             {u"distance"_s, formatDistance(leg.distance)},
             {u"duration"_s, formatDuration(leg.duration)},
             {u"steps"_s, steps},
         });
+        m_parts.push_back(std::move(part));
         distance += leg.distance;
         duration += leg.duration;
     }

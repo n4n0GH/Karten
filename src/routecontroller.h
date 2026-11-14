@@ -16,6 +16,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <vector>
 
 class OfflineManager;
 class TransitPlanner;
@@ -83,6 +84,32 @@ public:
     };
     Q_ENUM(TravelMode)
 
+    /// One instruction of a route by road, as it is printed.
+    struct Step {
+        Maneuver::Type type = Maneuver::Continue;
+        QString text;
+        QString street; ///< the road it leads onto, may be empty
+        double distance = 0; ///< metres from here to the next instruction
+        quint32 pathIndex = 0; ///< where on Itinerary::path it applies
+    };
+    /// The way from one stop to the next.
+    struct Part {
+        QString title;
+        double distance = 0; ///< metres
+        double duration = 0; ///< seconds
+        std::vector<Step> steps;
+    };
+    /// A route by road with its figures as numbers, where the properties
+    /// have them as text.
+    struct Itinerary {
+        std::vector<GeoPoint> path;
+        std::vector<Part> parts;
+        bool isValid() const
+        {
+            return path.size() >= 2 && !parts.empty();
+        }
+    };
+
     explicit RouteController(OfflineManager *offline, QObject *parent = nullptr);
     ~RouteController() override;
     static RouteController *create(QQmlEngine *, QJSEngine *);
@@ -113,6 +140,9 @@ public:
     QString durationText() const;
     bool offline() const;
     QString errorText() const;
+    /// The route that is shown; not valid when there is none or when it is
+    /// a public transport connection.
+    Itinerary itinerary() const;
 
     Q_INVOKABLE void setFrom(const QGeoCoordinate &coordinate, const QString &name);
     Q_INVOKABLE void setTo(const QGeoCoordinate &coordinate, const QString &name);
@@ -216,6 +246,7 @@ private:
     QDateTime m_transitTime;
     bool m_arriveBy = false;
     std::vector<GeoPoint> m_routePoints; ///< the route line
+    std::vector<Part> m_parts; ///< what m_legs was made of
     /// Where on the route line the stops and detours lie, in travel order
     /// and without the destination.
     std::vector<quint32> m_waypointPositions;

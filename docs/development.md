@@ -49,8 +49,8 @@ flatpak run io.github.n4n0gh.karten
 ```
 
 The sandbox is given the network, the display, the graphics device, KWallet
-(for the optional Google key) and GeoClue (for "Show My Location"), and no
-access to files. Data ends up under `~/.var/app/io.github.n4n0gh.karten/`.
+(for the optional Google key), GeoClue (for "Show My Location") and the
+printers (CUPS), and no access to files. Data ends up under `~/.var/app/io.github.n4n0gh.karten/`.
 
 How a version gets from there to users is described in
 [Releasing](releasing.md).
@@ -69,6 +69,10 @@ ctest --test-dir build --output-on-failure
   the decoder garbage, and unpacks gzip.
 - `autotests/desktopcolorstest.cpp`: the colour scheme file written from what
   the settings portal has (see [Interface](interface.md)).
+- `autotests/printtest.cpp`: draws a map for paper from a tile put together
+  by hand and looks at its pixels, and counts the pages of roadbooks written
+  as PDF (see [Printing](printing.md)). `autotests/tilewriter.h` is the
+  writer for such tiles.
 - `appstreamtest`: validates the metainfo file.
 
 Apart from that only `src/core` has unit tests. The services and the interface

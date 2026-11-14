@@ -14,6 +14,7 @@ SPDX-License-Identifier: CC0-1.0
   </developer>
   <description>
     <p>Karten is a simple map for the Plasma desktop. Search for a place, and plan a route there by car, by bicycle, on foot or by public transport.</p>
+    <p>Print a route as a roadbook: its instructions one below the other, each with its distance from the start and a small map of the junction.</p>
     <p>Download a region to keep planning routes and finding places without an internet connection. Map data comes from OpenStreetMap.</p>
   </description>
   <url type="homepage">https://github.com/n4n0gh/karten</url>
@@ -36,6 +37,11 @@ SPDX-License-Identifier: CC0-1.0
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.0" date="2026-11-14">
+      <description>
+        <p>Print a route as a roadbook, to navigate by without a screen: every instruction with its distance from the start and from the instruction before, and a small map of the junction that points the way you are going. A map of the whole route goes first. Print Route is in the menu and next to the route's duration; it works for routes by car, by bicycle and on foot.</p>
+      </description>
+    </release>
     <release version="0.2.1" date="2026-11-13">
       <description>
         <p>Installed as a Flatpak, Karten now follows the desktop's colours when they change while it runs, and shows the icons of Plasma's global theme.</p>

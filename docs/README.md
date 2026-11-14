@@ -15,6 +15,7 @@ go into the code.
 | [Architecture](architecture.md) | The parts, how they talk to each other, threads, where data is kept |
 | [The map](map.md) | Local map server, tile store, map styles, offline map areas |
 | [Routing](routing.md) | Reading OpenStreetMap extracts, the road graph, the router, stops, detours and previews |
+| [Printing](printing.md) | The roadbook: the map drawn for paper, the pages, the print preview |
 | [Places](places.md) | Search, clicking places on the map, details, opening hours, Wikipedia, Google |
 | [Interface](interface.md) | The QML files, settings, colours, icons |
 | [Development](development.md) | Building, tests, debugging, conventions, how to add things |
@@ -26,7 +27,7 @@ the way they are; they do not repeat every member.
 
 ## The code at a glance
 
-About 10,500 lines: C++20 for the logic, QML (Kirigami) for the interface.
+About 14,000 lines: C++20 for the logic, QML (Kirigami) for the interface.
 
 ```
 src/
@@ -35,7 +36,7 @@ src/
   qml/            The interface
   icons/          Pictograms the icon themes lack
   tools/          karten-route, a command line router for development
-autotests/        Unit tests for src/core
+autotests/        Unit tests for src/core and for printing
 scripts/          build-maplibre.sh
 docs/             These pages
 ```

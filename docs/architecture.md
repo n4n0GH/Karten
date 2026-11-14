@@ -31,13 +31,16 @@ C++ objects created in `src/main.cpp` and exposed to QML as singletons.
 | `Geocoder` | `src/geocoder.*` | Search, reverse lookup, what is at a spot of the map, and details about a place. |
 | `RouteController` | `src/routecontroller.*` | Stops, detours, the planned route and its preview. |
 | `TransitPlanner` | `src/transitplanner.*` | Public transport connections through KPublicTransport. Owned by `RouteController`, not a singleton. |
+| `Roadbook` | `src/roadbook.*` | Prints the route: gathers the tiles, has the maps drawn, shows the print preview. |
+| `PrintMap` | `src/printmap.*` | Draws a map for paper from vector tiles with a painter. Not a QObject; made for one roadbook and used on a worker thread. |
+| `RoadbookDocument` | `src/roadbookdocument.*` | The pages of a roadbook. A plain value: texts and pictures, and how to lay them out. |
 | `Appearance` | `src/appearance.*` | Light, dark or system colours, through `KColorSchemeManager`. |
 | `DesktopColors` | `src/desktopcolors.*` | In a Flatpak, the desktop's colours when they change while Karten runs. Made in `main()`, not known to QML. |
 | `KeyStore` | `src/keystore.*` | Secrets in KWallet. |
 | `Network` | `src/network.*` | One `QNetworkAccessManager` and the User-Agent every request carries. |
 
-`TileServer`, `OfflineManager`, `Geocoder` and `RouteController` are created
-in `main()` in dependency order and handed to QML through a static
+`TileServer`, `OfflineManager`, `Geocoder`, `RouteController` and `Roadbook`
+are created in `main()` in dependency order and handed to QML through a static
 `create()` function that returns the existing instance (`QML_SINGLETON` with
 C++ ownership). `Appearance` and `KeyStore` have no dependencies and are
 created by the QML engine on first use.
@@ -52,14 +55,15 @@ and zlib only, so it can be tested without a display and reused:
 - `graphbuilder.*`: OSM ways and nodes to a road graph and a list of places.
 - `roadgraph.*`: the graph, its file format and a spatial index.
 - `router.*`: A* search and turn instructions.
-- `vectortile.*`: point features out of a Mapbox Vector Tile, and gzip.
+- `vectortile.*`: the features of a Mapbox Vector Tile, as points or as
+  shapes, and gzip.
 
 ## Threads
 
 Almost everything runs on the main thread and is asynchronous through Qt's
 event loop: network replies, the local server, SQLite access.
 
-Two things run on worker threads through `QtConcurrent::run`:
+Three things run on worker threads through `QtConcurrent::run`:
 
 - **Importing an extract** (`ExtractImporter::run`): reads the file twice and
   writes the results. Cancelled through an `atomic_bool` checked in the
@@ -67,6 +71,10 @@ Two things run on worker threads through `QtConcurrent::run`:
 - **Offline routing** (`RouteController::plan`): loads the graph if needed and
   runs the router. Each request carries its own `atomic_bool`; a result whose
   flag is set is dropped.
+
+- **Drawing the maps of a roadbook** (`Roadbook::draw`): the `PrintMap` is
+  filled with tiles on the main thread and then handed to the worker, which
+  returns the maps as pictures. See [Printing](printing.md).
 
 The most recently used road graph is kept in memory in a mutex-guarded cache
 (`GraphCache` in `routecontroller.cpp`), because loading takes much longer
@@ -110,7 +118,7 @@ itself (pictures) goes through `Network::qmlFactory()`, which sets the same.
 
 | Service | Used by | When |
 | --- | --- | --- |
-| OpenFreeMap (or the chosen map source) | `TileServer` | Drawing the map, downloading a map area |
+| OpenFreeMap (or the chosen map source) | `TileServer` | Drawing the map, downloading a map area, printing a route |
 | Nominatim | `Geocoder` | A submitted search; naming a dropped pin; details of a place outside downloaded regions |
 | routing.openstreetmap.de (OSRM) | `RouteController` | Routes that downloaded data does not cover |
 | Transitous | `TransitPlanner` | A route by public transport: when its start, destination or time changes |

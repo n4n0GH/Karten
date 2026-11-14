@@ -68,6 +68,13 @@ Kirigami.ApplicationWindow {
     }
 
     Connections {
+        target: Roadbook
+        function onNotice(message: string): void {
+            root.showPassiveNotification(message, "long");
+        }
+    }
+
+    Connections {
         target: OfflineManager
         function onCompleted(message: string): void {
             root.showPassiveNotification(message);

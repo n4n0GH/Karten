@@ -18,3 +18,13 @@ ecm_add_test(desktopcolorstest.cpp
     LINK_LIBRARIES Qt6::Test Qt6::DBus Qt6::Widgets
 )
 target_include_directories(desktopcolorstest PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# Printing: the map drawn for paper, and the pages of a roadbook.
+ecm_add_test(printtest.cpp
+        ${CMAKE_SOURCE_DIR}/src/printmap.cpp
+        ${CMAKE_SOURCE_DIR}/src/roadbookdocument.cpp
+    TEST_NAME printtest
+    LINK_LIBRARIES kartencore Qt6::Test Qt6::Gui KF6::I18n
+)
+target_include_directories(printtest PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(printtest PRIVATE TRANSLATION_DOMAIN="karten")

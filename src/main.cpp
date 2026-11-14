@@ -7,6 +7,7 @@
 #include "karten-version.h"
 #include "network.h"
 #include "offlinemanager.h"
+#include "roadbook.h"
 #include "routecontroller.h"
 #include "tileserver.h"
 #include "tilestore.h"
@@ -122,6 +123,7 @@ int main(int argc, char **argv)
     OfflineManager offline(&store, &server);
     Geocoder geocoder(&offline);
     RouteController routes(&offline);
+    Roadbook roadbook(&routes, &server);
 
     QQmlApplicationEngine engine;
     const std::unique_ptr<QQmlNetworkAccessManagerFactory> networkFactory(Network::qmlFactory());

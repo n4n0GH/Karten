@@ -3,48 +3,16 @@
 
 #include "vectortile.h"
 
+#include "tilewriter.h"
+
 #include <QTest>
 
 using namespace Qt::StringLiterals;
 
+using namespace TileWriter;
+
 namespace
 {
-// A minimal protobuf writer, enough to put a vector tile together.
-QByteArray varint(quint64 value)
-{
-    QByteArray out;
-    do {
-        const char byte = char(value & 0x7f);
-        value >>= 7;
-        out.append(value ? char(byte | 0x80) : byte);
-    } while (value);
-    return out;
-}
-
-QByteArray number(int field, quint64 value)
-{
-    return varint(quint64(field) << 3) + varint(value);
-}
-
-QByteArray bytes(int field, const QByteArray &content)
-{
-    return varint(quint64(field) << 3 | 2) + varint(quint64(content.size())) + content;
-}
-
-quint64 zigzag(qint64 value)
-{
-    return (quint64(value) << 1) ^ quint64(value >> 63);
-}
-
-QByteArray packed(std::initializer_list<quint64> values)
-{
-    QByteArray out;
-    for (const quint64 value : values) {
-        out += varint(value);
-    }
-    return out;
-}
-
 /// A feature of the given geometry type at one position, with tag index pairs.
 QByteArray feature(int type, int x, int y, std::initializer_list<quint64> tags)
 {
@@ -52,16 +20,10 @@ QByteArray feature(int type, int x, int y, std::initializer_list<quint64> tags)
     return bytes(2, packed(tags)) + number(3, quint64(type)) + bytes(4, packed({moveToOnce, zigzag(x), zigzag(y)}));
 }
 
+/// A layer of such features, with the keys and values their tags refer to.
 QByteArray layer(const QByteArray &name, const QList<QByteArray> &features)
 {
-    QByteArray out = bytes(1, name);
-    for (const QByteArray &entry : features) {
-        out += bytes(2, entry);
-    }
-    out += bytes(3, "name") + bytes(3, "rank");
-    out += bytes(4, bytes(1, "Café Zentral")) + bytes(4, number(4, 7)) + bytes(4, bytes(1, "Bahnhof"));
-    out += number(5, 4096);
-    return out;
+    return TileWriter::layer(name, features, {"name", "rank"}, {text("Café Zentral"), number(4, 7), text("Bahnhof")});
 }
 }
 
@@ -91,8 +53,49 @@ private Q_SLOTS:
         QCOMPARE(points[1].properties.value(u"name"_s).toString(), u"Bahnhof"_s);
     }
 
+    void readsLinesAndAreas()
+    {
+        // A road of two stretches, and a lake with an island in it.
+        // One after the other: each continues from where the last ended.
+        QPoint cursor;
+        QByteArray road = path({{0, 0}, {2048, 0}, {2048, 2048}}, false, cursor);
+        road += path({{4096, 4096}, {0, 4096}}, false, cursor);
+        cursor = {};
+        QByteArray lake = path({{1024, 1024}, {3072, 1024}, {3072, 3072}, {1024, 3072}}, true, cursor);
+        lake += path({{1536, 1536}, {1536, 2560}, {2560, 2560}}, true, cursor);
+        const QByteArray tile =
+            bytes(3, TileWriter::layer("transportation", {shape(2, road, {0, 0, 1, 1})}, {"class", "name"}, {text("primary"), text("Ring")}))
+            + bytes(3, TileWriter::layer("water", {shape(3, lake, {0, 0})}, {"class"}, {text("lake")}))
+            + bytes(3, TileWriter::layer("building", {shape(3, lake, {})}, {}, {}));
+
+        const QList<VectorTile::Feature> features = VectorTile::features(tile, {u"water"_s, u"transportation"_s}, {u"class"_s});
+        QCOMPARE(features.size(), 2);
+
+        // In the order of the tile; the layer is the place in the list asked for.
+        QCOMPARE(features[0].type, VectorTile::Feature::Line);
+        QCOMPARE(features[0].layer, 1);
+        QCOMPARE(features[0].parts.size(), 2);
+        QCOMPARE(features[0].parts[0], (QList<QPointF>{{0, 0}, {0.5, 0}, {0.5, 0.5}}));
+        QCOMPARE(features[0].parts[1], (QList<QPointF>{{1, 1}, {0, 1}}));
+        QCOMPARE(features[0].properties.value(u"class"_s).toString(), u"primary"_s);
+        // Only the properties asked for are read.
+        QVERIFY(!features[0].properties.contains(u"name"_s));
+
+        QCOMPARE(features[1].type, VectorTile::Feature::Polygon);
+        QCOMPARE(features[1].layer, 0);
+        QCOMPARE(features[1].parts.size(), 2);
+        QCOMPARE(features[1].parts[0].size(), 4);
+        QCOMPARE(features[1].parts[1], (QList<QPointF>{{0.375, 0.375}, {0.375, 0.625}, {0.625, 0.625}}));
+        QCOMPARE(features[1].properties.value(u"class"_s).toString(), u"lake"_s);
+    }
+
     void survivesGarbage()
     {
+        // A line that claims more points than there is data for.
+        const QByteArray cut = bytes(3, TileWriter::layer("water", {shape(2, packed({1 | 1 << 3, 0, 0, 2 | 1000 << 3, 2, 2}), {})}, {}, {}));
+        QVERIFY(VectorTile::features(cut, {u"water"_s}, {}).isEmpty());
+        QVERIFY(VectorTile::features("not a vector tile at all", {u"poi"_s}, {}).isEmpty());
+
         QVERIFY(VectorTile::pointFeatures("not a vector tile at all", {u"poi"_s}).isEmpty());
         QVERIFY(VectorTile::pointFeatures(QByteArray(64, '\xff'), {u"poi"_s}).isEmpty());
         QVERIFY(VectorTile::pointFeatures({}, {u"poi"_s}).isEmpty());

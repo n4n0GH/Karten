@@ -18,6 +18,8 @@ ColumnLayout {
 
     required property geoCoordinate mapCenter
     required property geoCoordinate myLocation
+    /// Prints the route as a roadbook.
+    required property Kirigami.Action printAction
     /// Which stop the search results belong to.
     property int editingStop: 0
     /// The parts of the route whose steps are shown, by number.
@@ -305,22 +307,42 @@ ColumnLayout {
         text: RouteController.errorText
     }
 
-    ColumnLayout {
+    RowLayout {
         visible: RouteController.hasRoute && !RouteController.busy && !root.searching
-        spacing: 0
+        spacing: Kirigami.Units.smallSpacing
 
-        Kirigami.Heading {
+        ColumnLayout {
             Layout.fillWidth: true
-            level: 1
-            text: RouteController.durationText
+            spacing: 0
+
+            Kirigami.Heading {
+                Layout.fillWidth: true
+                level: 1
+                text: RouteController.durationText
+            }
+            QQC2.Label {
+                Layout.fillWidth: true
+                // By public transport this is the time of departure and arrival.
+                text: RouteController.offline
+                    ? i18nc("@info distance of a route", "%1, planned offline", RouteController.distanceText)
+                    : RouteController.distanceText
+                color: Kirigami.Theme.disabledTextColor
+            }
         }
-        QQC2.Label {
-            Layout.fillWidth: true
-            // By public transport this is the time of departure and arrival.
-            text: RouteController.offline
-                ? i18nc("@info distance of a route", "%1, planned offline", RouteController.distanceText)
-                : RouteController.distanceText
-            color: Kirigami.Theme.disabledTextColor
+        // While the roadbook is put together, which takes a moment when
+        // its maps have to be fetched first.
+        QQC2.BusyIndicator {
+            visible: Roadbook.busy
+            implicitWidth: Kirigami.Units.iconSizes.medium
+            implicitHeight: Kirigami.Units.iconSizes.medium
+        }
+        QQC2.ToolButton {
+            visible: Roadbook.available && !Roadbook.busy
+            action: root.printAction
+            display: QQC2.AbstractButton.IconOnly
+            QQC2.ToolTip.text: text
+            QQC2.ToolTip.visible: hovered
+            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
     }
 

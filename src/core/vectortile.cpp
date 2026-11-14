@@ -141,11 +141,13 @@ QVariant readValue(QByteArrayView data)
     return value;
 }
 
-void readLayer(QByteArrayView data, const QStringList &wanted, QList<VectorTile::PointFeature> &result)
+/// Reads the features of one layer, if it is among the wanted ones. With
+/// @p keys, only the properties of those names are read.
+void readLayer(QByteArrayView data, const QStringList &wanted, const QStringList *keys, QList<VectorTile::Feature> &result)
 {
     QString name;
     QList<QByteArrayView> features;
-    QStringList keys;
+    QStringList keyNames;
     QList<QByteArrayView> values;
     double extent = 4096;
 
@@ -160,7 +162,7 @@ void readLayer(QByteArrayView data, const QStringList &wanted, QList<VectorTile:
             features.append(pb.message());
             break;
         case 3:
-            keys.append(QString::fromUtf8(pb.message()));
+            keyNames.append(QString::fromUtf8(pb.message()));
             break;
         case 4:
             values.append(pb.message());
@@ -172,12 +174,23 @@ void readLayer(QByteArrayView data, const QStringList &wanted, QList<VectorTile:
             pb.skip(wireType);
         }
     }
-    if (!pb.ok || !wanted.contains(name) || extent <= 0) {
+    const int layer = int(wanted.indexOf(name));
+    if (!pb.ok || layer < 0 || extent <= 0) {
         return;
     }
+    QList<bool> keyWanted(keyNames.size(), true);
+    if (keys) {
+        for (qsizetype i = 0; i < keyNames.size(); ++i) {
+            keyWanted[i] = keys->contains(keyNames[i]);
+        }
+    }
+    // Many features share a value; each is decoded once.
+    QList<QVariant> decoded(values.size());
+    QList<bool> isDecoded(values.size(), false);
 
-    constexpr int Point = 1;
-    constexpr int MoveTo = 1;
+    constexpr quint64 MoveTo = 1;
+    constexpr quint64 LineTo = 2;
+    constexpr quint64 ClosePath = 7;
     for (const QByteArrayView &featureData : std::as_const(features)) {
         QByteArrayView tags;
         QByteArrayView geometry;
@@ -199,47 +212,95 @@ void readLayer(QByteArrayView data, const QStringList &wanted, QList<VectorTile:
                 feature.skip(wireType);
             }
         }
-        if (!feature.ok || type != Point) {
+        if (!feature.ok || type < VectorTile::Feature::Point || type > VectorTile::Feature::Polygon) {
             continue;
         }
 
-        // A point is "move to" with one position.
+        VectorTile::Feature entry;
+        entry.type = VectorTile::Feature::Type(type);
+        entry.layer = layer;
+        // Commands with positions relative to the one before.
+        qint64 x = 0;
+        qint64 y = 0;
         Pb commands(geometry);
-        const quint64 command = commands.varint();
-        const qint64 x = zigzag(commands.varint());
-        const qint64 y = zigzag(commands.varint());
-        if (!commands.ok || (command & 7) != MoveTo || (command >> 3) < 1) {
+        while (!commands.atEnd()) {
+            const quint64 command = commands.varint();
+            const quint64 id = command & 7;
+            quint64 count = command >> 3;
+            if (id == ClosePath) {
+                continue; // rings are closed by whoever draws them
+            }
+            // Every position takes two bytes at least.
+            if ((id != MoveTo && id != LineTo) || count > quint64(commands.end - commands.p) / 2) {
+                commands.ok = false;
+                break;
+            }
+            for (; count > 0 && commands.ok; --count) {
+                x += zigzag(commands.varint());
+                y += zigzag(commands.varint());
+                // Points are one part; lines and rings start with a move.
+                if (entry.parts.isEmpty() || (id == MoveTo && type != VectorTile::Feature::Point)) {
+                    entry.parts.append(QList<QPointF>());
+                }
+                entry.parts.last().append(QPointF(double(x) / extent, double(y) / extent));
+            }
+        }
+        if (!commands.ok || entry.parts.isEmpty()) {
             continue;
         }
 
-        VectorTile::PointFeature point;
-        point.layer = name;
-        point.x = double(x) / extent;
-        point.y = double(y) / extent;
         Pb pairs(tags);
         while (!pairs.atEnd()) {
             const quint64 key = pairs.varint();
             const quint64 value = pairs.varint();
-            if (pairs.ok && key < quint64(keys.size()) && value < quint64(values.size())) {
-                point.properties.insert(keys[qsizetype(key)], readValue(values[qsizetype(value)]));
+            if (!pairs.ok || key >= quint64(keyNames.size()) || value >= quint64(values.size()) || !keyWanted[qsizetype(key)]) {
+                continue;
             }
+            if (!isDecoded[qsizetype(value)]) {
+                decoded[qsizetype(value)] = readValue(values[qsizetype(value)]);
+                isDecoded[qsizetype(value)] = true;
+            }
+            entry.properties.insert(keyNames[qsizetype(key)], decoded[qsizetype(value)]);
         }
-        result.append(point);
+        result.append(std::move(entry));
     }
 }
+
+QList<VectorTile::Feature> readTile(const QByteArray &tile, const QStringList &layers, const QStringList *keys)
+{
+    QList<VectorTile::Feature> result;
+    Pb pb(tile);
+    while (!pb.atEnd()) {
+        int wireType = 0;
+        if (pb.field(wireType) == 3 && wireType == 2) {
+            readLayer(pb.message(), layers, keys, result);
+        } else {
+            pb.skip(wireType);
+        }
+    }
+    return result;
+}
+}
+
+QList<VectorTile::Feature> VectorTile::features(const QByteArray &tile, const QStringList &layers, const QStringList &keys)
+{
+    return readTile(tile, layers, &keys);
 }
 
 QList<VectorTile::PointFeature> VectorTile::pointFeatures(const QByteArray &tile, const QStringList &layers)
 {
     QList<PointFeature> result;
-    Pb pb(tile);
-    while (!pb.atEnd()) {
-        int wireType = 0;
-        if (pb.field(wireType) == 3 && wireType == 2) {
-            readLayer(pb.message(), layers, result);
-        } else {
-            pb.skip(wireType);
+    const QList<Feature> all = readTile(tile, layers, nullptr);
+    for (const Feature &feature : all) {
+        if (feature.type != Feature::Point) {
+            continue;
         }
+        PointFeature point;
+        point.layer = layers[feature.layer];
+        point.x = feature.parts.first().first().x();
+        point.y = feature.parts.first().first().y();
+        point.properties = feature.properties;
+        result.append(point);
     }
     return result;
 }

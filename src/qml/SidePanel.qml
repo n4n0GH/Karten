@@ -20,6 +20,7 @@ QQC2.Control {
     required property bool directionsMode
     required property geoCoordinate myLocation
     required property Kirigami.Action directionsAction
+    required property Kirigami.Action printAction
     property real maximumHeight: Infinity
 
     signal placeChosen(var chosen)
@@ -96,6 +97,7 @@ QQC2.Control {
             visible: root.directionsMode
             mapCenter: root.mapCenter
             myLocation: root.myLocation
+            printAction: root.printAction
             onClosed: root.directionsClosed()
             onPositionChosen: (latitude, longitude) => root.positionChosen(latitude, longitude)
         }
