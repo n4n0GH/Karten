@@ -37,6 +37,11 @@ SPDX-License-Identifier: CC0-1.0
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.1" date="2026-11-15">
+      <description>
+        <p>Save a route as a PDF file: Save Route as PDF is in the menu, and the print preview has a button for it that keeps the paper chosen there. Karten now opens the geo: links that other applications use to show a place, so it can be chosen as the map application in the system settings.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-11-14">
       <description>
         <p>Print a route as a roadbook, to navigate by without a screen: every instruction with its distance from the start and from the instruction before, and a small map of the junction that points the way you are going. A map of the whole route goes first. Print Route is in the menu and next to the route's duration; it works for routes by car, by bicycle and on foot.</p>

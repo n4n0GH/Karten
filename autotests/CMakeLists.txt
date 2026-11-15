@@ -6,6 +6,12 @@ ecm_add_test(vectortiletest.cpp
     LINK_LIBRARIES kartencore Qt6::Test
 )
 
+# The links by which other programs ask for a place.
+ecm_add_test(geouritest.cpp
+    TEST_NAME geouritest
+    LINK_LIBRARIES kartencore Qt6::Test
+)
+
 ecm_add_test(routertest.cpp
     TEST_NAME routertest
     LINK_LIBRARIES kartencore Qt6::Test

@@ -28,6 +28,12 @@ QQC2.Control {
     signal directionsClosed
     signal positionChosen(real latitude, real longitude)
 
+    /// Searches for words as if they had been typed and submitted.
+    function search(text: string): void {
+        searchField.text = text;
+        Geocoder.search(text, root.mapCenter.latitude, root.mapCenter.longitude);
+    }
+
     height: Math.min(implicitHeight, maximumHeight)
     padding: Kirigami.Units.largeSpacing
 

@@ -7,15 +7,24 @@
 
 #include <KLocalizedString>
 
+#include <QAction>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFutureWatcher>
 #include <QGuiApplication>
 #include <QLocale>
+#include <QMessageBox>
 #include <QPainter>
+#include <QPdfWriter>
 #include <QPointer>
 #include <QPrintPreviewDialog>
 #include <QPrinter>
+#include <QRegularExpression>
+#include <QSaveFile>
 #include <QSet>
+#include <QStandardPaths>
 #include <QTextDocumentFragment>
+#include <QToolBar>
 #include <QWindow>
 #include <QtConcurrentRun>
 
@@ -126,6 +135,27 @@ QString totalText(double metres)
     }
     const QString number = locale.toString(amount, 'f', 1);
     return metric ? i18nc("distance in kilometres", "%1 km", number) : i18nc("distance in miles", "%1 mi", number);
+}
+
+/// The printer a roadbook is laid out for until the user chooses another:
+/// the default one, with its paper.
+std::unique_ptr<QPrinter> makePrinter(const QString &title)
+{
+    auto printer = std::make_unique<QPrinter>(QPrinter::HighResolution);
+    printer->setDocName(title);
+    printer->setPageMargins(QMarginsF(12, 12, 12, 12), QPageLayout::Millimeter);
+    return printer;
+}
+
+/// Makes a dialog of widgets belong to a window of whatever kind: they are
+/// only related as windows.
+void attach(QWidget *dialog, QWindow *parent)
+{
+    if (parent) {
+        dialog->winId();
+        dialog->windowHandle()->setTransientParent(parent);
+        dialog->setWindowModality(Qt::WindowModal);
+    }
 }
 
 QString modeText(RouteController::TravelMode mode)
@@ -441,9 +471,7 @@ void Roadbook::print(QWindow *window)
         if (mapsMissing) {
             Q_EMIT notice(i18nc("@info", "Parts of the map could not be loaded. Where it is missing, the roadbook shows the route alone."));
         }
-        auto *printer = new QPrinter(QPrinter::HighResolution);
-        printer->setDocName(document.title);
-        printer->setPageMargins(QMarginsF(12, 12, 12, 12), QPageLayout::Millimeter);
+        QPrinter *printer = makePrinter(document.title).release();
 
         // Shows the pages as they will be, and prints them or saves them as a file.
         auto *dialog = new QPrintPreviewDialog(printer);
@@ -455,13 +483,100 @@ void Roadbook::print(QWindow *window)
         connect(dialog, &QObject::destroyed, [printer] {
             delete printer;
         });
+        // The print dialog can print into a file too, but wants its name
+        // typed in, and proposes one in the current folder. In a Flatpak a
+        // file so named stays inside the sandbox, where nobody finds it;
+        // only one chosen in a file dialog arrives. Hence a button that asks
+        // with one, and saves the pages as the preview shows them.
+        if (auto *toolBar = dialog->findChild<QToolBar *>()) {
+            toolBar->addSeparator();
+            const QAction *save = toolBar->addAction(QIcon::fromTheme(u"document-save-as"_s), i18nc("@action:intoolbar", "Save as PDF…"));
+            connect(save, &QAction::triggered, dialog, [this, dialog, printer, document] {
+                chooseFile(dialog->windowHandle(), dialog, [this, dialog, printer, document](const QString &file) {
+                    if (write(document, printer->pageLayout(), file)) {
+                        dialog->accept();
+                    } else {
+                        QMessageBox::warning(dialog,
+                                             i18nc("@title:window", "Save Roadbook"),
+                                             i18nc("@info %1 is the name of a file", "The roadbook could not be saved as “%1”.", QFileInfo(file).fileName()));
+                    }
+                });
+            });
+        }
+        attach(dialog, parent);
         if (parent) {
-            // A dialog of widgets on a window of Qt Quick: they are only related as windows.
-            dialog->winId();
-            dialog->windowHandle()->setTransientParent(parent);
-            dialog->setWindowModality(Qt::WindowModal);
             dialog->resize(parent->size().boundedTo(QSize(1000, 1100)));
         }
         dialog->open();
     });
+}
+
+void Roadbook::saveAs(QWindow *window)
+{
+    if (m_busy || !available()) {
+        return;
+    }
+    // The file first: the answer to the click should not wait for the maps.
+    chooseFile(window, this, [this](const QString &file) {
+        prepare([this, file](const RoadbookDocument &document, bool mapsMissing) {
+            if (document.sections.isEmpty()) {
+                return;
+            }
+            if (mapsMissing) {
+                Q_EMIT notice(i18nc("@info", "Parts of the map could not be loaded. Where it is missing, the roadbook shows the route alone."));
+            }
+            if (!write(document, makePrinter(document.title)->pageLayout(), file)) {
+                Q_EMIT notice(i18nc("@info %1 is the name of a file", "The roadbook could not be saved as “%1”.", QFileInfo(file).fileName()));
+            }
+        });
+    });
+}
+
+void Roadbook::chooseFile(QWindow *window, QObject *receiver, const std::function<void(const QString &)> &chosen)
+{
+    // Named after the route, without what a file name cannot have.
+    QString name = i18nc("@item the name proposed for the file of a printed route; %1 is where it starts, %2 where it ends",
+                         "Roadbook %1 – %2",
+                         m_routes->fromName(),
+                         m_routes->toName());
+    static const QRegularExpression unfit(uR"([/\\:*?"<>|\x00-\x1f])"_s);
+    name = name.replace(unfit, u" "_s).simplified().left(120);
+
+    // In a Flatpak this is the portal's dialog, and the file it answers
+    // with is the one way out of the sandbox.
+    auto *dialog = new QFileDialog(nullptr, i18nc("@title:window", "Save Roadbook"));
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setAcceptMode(QFileDialog::AcceptSave);
+    dialog->setFileMode(QFileDialog::AnyFile);
+    dialog->setMimeTypeFilters({u"application/pdf"_s});
+    dialog->setDefaultSuffix(u"pdf"_s);
+    dialog->setDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    dialog->selectFile(name + u".pdf"_s);
+    connect(dialog, &QFileDialog::fileSelected, receiver, chosen);
+    attach(dialog, window);
+    dialog->open();
+}
+
+bool Roadbook::write(const RoadbookDocument &document, const QPageLayout &layout, const QString &file)
+{
+    // Whole or not at all, where that can be had: of a file from Flatpak's
+    // portal there may be only itself to write to, with no room beside it.
+    QSaveFile target(file);
+    target.setDirectWriteFallback(true);
+    if (!target.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    QPdfWriter writer(&target);
+    writer.setTitle(document.title);
+    writer.setCreator(QGuiApplication::applicationDisplayName());
+    writer.setPageLayout(layout);
+    if (document.paint(&writer) == 0) {
+        target.cancelWriting();
+        return false;
+    }
+    if (!target.commit()) {
+        return false;
+    }
+    Q_EMIT notice(i18nc("@info %1 is the name of a file", "Roadbook saved as “%1”.", QFileInfo(file).fileName()));
+    return true;
 }

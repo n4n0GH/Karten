@@ -52,8 +52,9 @@ reaching the map.
 | `Preferences.qml` | Singleton with the options chosen in the settings. |
 | `CardBackground.qml` | Background of the floating cards. |
 
-The print preview is the one window that is not QML: Qt's
-`QPrintPreviewDialog`, opened by `Roadbook`. See [Printing](printing.md).
+Printing has the only windows that are not QML: Qt's `QPrintPreviewDialog`
+and the file dialog for saving a roadbook, both opened by `Roadbook`. See
+[Printing](printing.md).
 
 ## State in MapPage
 

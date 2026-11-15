@@ -5,8 +5,10 @@ Type=Application
 Name=Karten
 GenericName=Maps
 Comment=Maps and route planning that also work offline
-Exec=karten
+Exec=karten %u
 Icon=io.github.n4n0gh.karten
 Terminal=false
+# Links to a place, as address books and calendars have them.
+MimeType=x-scheme-handler/geo;
 Categories=Qt;KDE;Education;Geography;Maps;
 Keywords=map;maps;navigation;route;directions;offline;OpenStreetMap;OSM;

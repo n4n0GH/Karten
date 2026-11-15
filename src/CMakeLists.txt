@@ -4,6 +4,8 @@
 # Routing core: no GUI, so that it can be tested and reused on its own.
 add_library(kartencore STATIC
     core/geo.h
+    core/geouri.cpp
+    core/geouri.h
     core/graphbuilder.cpp
     core/graphbuilder.h
     core/pbfreader.cpp

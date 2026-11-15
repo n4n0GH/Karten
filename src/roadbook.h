@@ -8,6 +8,7 @@
 #include "routecontroller.h"
 
 #include <QObject>
+#include <QPageLayout>
 #include <QQmlEngine>
 #include <QWindow>
 
@@ -24,7 +25,8 @@ class TileServer;
 /// then drawn on a worker thread, as pictures that can be played back at
 /// any size. Last, a print preview opens, from which the roadbook is
 /// printed or saved as a PDF file; for each sheet of paper it shows, the
-/// pictures only have to be arranged.
+/// pictures only have to be arranged. Saving as a file is also there on its
+/// own, without the preview.
 class Roadbook : public QObject
 {
     Q_OBJECT
@@ -45,6 +47,9 @@ public:
     /// Prepares the roadbook of the current route and shows its print
     /// preview, as a dialog of @p window.
     Q_INVOKABLE void print(QWindow *window);
+    /// Asks for a file, in a dialog of @p window, and writes the roadbook of
+    /// the current route into it as PDF, on the paper of the default printer.
+    Q_INVOKABLE void saveAs(QWindow *window);
 
     /// Prepares the roadbook of the current route and hands it over; an
     /// empty one when there is no route. @p mapsMissing says whether some
@@ -70,6 +75,13 @@ private:
     void fetch(const std::shared_ptr<Preparation> &preparation);
     void draw(const std::shared_ptr<Preparation> &preparation);
     void setBusy(bool busy);
+    /// Asks which file to save the roadbook of the current route as, in a
+    /// dialog of @p window, and hands the answer to @p chosen for as long as
+    /// @p receiver lives. Nothing is handed over when the user declines.
+    void chooseFile(QWindow *window, QObject *receiver, const std::function<void(const QString &)> &chosen);
+    /// Writes a roadbook into a PDF file and tells the user that it did;
+    /// false when the file cannot be written.
+    bool write(const RoadbookDocument &document, const QPageLayout &layout, const QString &file);
 
     RouteController *const m_routes;
     TileServer *const m_server;

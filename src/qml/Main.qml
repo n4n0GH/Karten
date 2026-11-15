@@ -11,6 +11,9 @@ import io.github.n4n0gh.karten
 Kirigami.ApplicationWindow {
     id: root
 
+    /// The place Karten was started to show, or an empty map: see MapPage.
+    property var link: ({})
+
     width: Kirigami.Units.gridUnit * 64
     height: Kirigami.Units.gridUnit * 40
     minimumWidth: Kirigami.Units.gridUnit * 20
@@ -21,6 +24,7 @@ Kirigami.ApplicationWindow {
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
     pageStack.initialPage: MapPage {
         id: mapPage
+        link: root.link
         onOfflineMapsRequested: root.pageStack.pushDialogLayer(offlinePage, {}, {
             title: i18nc("@title:window", "Offline Maps"),
             width: Kirigami.Units.gridUnit * 30,

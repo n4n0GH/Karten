@@ -4,6 +4,7 @@
 #include "appearance.h"
 #include "desktopcolors.h"
 #include "geocoder.h"
+#include "geouri.h"
 #include "karten-version.h"
 #include "network.h"
 #include "offlinemanager.h"
@@ -18,6 +19,7 @@
 #include <KLocalizedString>
 
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QDir>
 #include <QFile>
 #include <QIcon>
@@ -92,6 +94,29 @@ int main(int argc, char **argv)
                              "The map is provided by OpenFreeMap and drawn by MapLibre. "
                              "Offline routing data is built from extracts provided by Geofabrik."));
     KAboutData::setApplicationData(about);
+
+    // A place to show can be given as a link, which is how other programs
+    // ask for the map of one: see GeoUri.
+    QCommandLineParser parser;
+    about.setupCommandLine(&parser);
+    parser.addPositionalArgument(u"place"_s, i18nc("@info:shell", "A place to show, as a geo: link such as geo:52.52,13.40"), u"[geo:…]"_s);
+    parser.process(app);
+    about.processCommandLine(&parser);
+    QVariantMap link;
+    if (const QStringList places = parser.positionalArguments(); !places.isEmpty()) {
+        if (const std::optional<GeoUri> uri = GeoUri::parse(places.first())) {
+            link = {
+                {u"latitude"_s, uri->position.lat},
+                {u"longitude"_s, uri->position.lon},
+                {u"positioned"_s, uri->hasPosition()},
+                {u"zoom"_s, uri->zoom},
+                {u"title"_s, uri->label},
+                {u"query"_s, uri->query},
+            };
+        } else {
+            qWarning("Not a geo: link that names a place: %s", qPrintable(places.first()));
+        }
+    }
     QGuiApplication::setWindowIcon(QIcon::fromTheme(u"io.github.n4n0gh.karten"_s, QIcon::fromTheme(u"map-globe"_s)));
 
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
@@ -137,6 +162,7 @@ int main(int argc, char **argv)
             QCoreApplication::exit(1);
         },
         Qt::QueuedConnection);
+    engine.setInitialProperties({{u"link"_s, link}});
     engine.loadFromModule("io.github.n4n0gh.karten", "Main");
 
     return app.exec();

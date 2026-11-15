@@ -67,6 +67,8 @@ ctest --test-dir build --output-on-failure
   garbage input is rejected.
 - `autotests/vectortiletest.cpp`: decodes a tile put together by hand, feeds
   the decoder garbage, and unpacks gzip.
+- `autotests/geouritest.cpp`: reads `geo:` links of every kind understood,
+  and refuses what is none (see [Places](places.md)).
 - `autotests/desktopcolorstest.cpp`: the colour scheme file written from what
   the settings portal has (see [Interface](interface.md)).
 - `autotests/printtest.cpp`: draws a map for paper from a tile put together

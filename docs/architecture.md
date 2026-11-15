@@ -51,6 +51,7 @@ created by the QML engine on first use.
 and zlib only, so it can be tested without a display and reused:
 
 - `geo.h`: distance, bearing and turn angle on the sphere.
+- `geouri.*`: reads the `geo:` links by which other programs ask for a place.
 - `pbfreader.*`: streaming reader for `.osm.pbf` files.
 - `graphbuilder.*`: OSM ways and nodes to a road graph and a list of places.
 - `roadgraph.*`: the graph, its file format and a spatial index.

@@ -55,7 +55,9 @@ for them and the action is disabled.
 
 ## The steps
 
-`Roadbook::print(window)` is what the *Print Route…* action calls.
+`Roadbook::print(window)` is what the *Print Route…* action calls;
+*Save Route as PDF…* calls `Roadbook::saveAs(window)`, which goes the same
+way up to the preview.
 
 1. **What to print** (`prepare`): `RouteController::itinerary()` hands over
    the route with numbers where the interface has text: the line, and per
@@ -72,10 +74,21 @@ for them and the action is disabled.
    `QPicture`, a recording of painter commands that plays back sharp at any
    resolution.
 4. **Preview**: a `QPrintPreviewDialog` shows the pages. From there the
-   roadbook is printed, or saved as a PDF file through the print dialog. For
-   every sheet it shows or prints, `RoadbookDocument::paint` only arranges
-   text and plays pictures, which is quick; changing the paper in the
-   preview lays everything out anew.
+   roadbook is printed, or saved as a PDF file with the last button of its
+   toolbar. For every sheet it shows or prints, `RoadbookDocument::paint`
+   only arranges text and plays pictures, which is quick; changing the paper
+   in the preview lays everything out anew.
+
+Saving as a file asks for the file in a file dialog (`chooseFile`) and writes
+it with a `QPdfWriter` (`write`): from the preview at once and on the paper
+chosen there, from the menu before the maps are made, so that the click is
+answered at once, and on the paper of the default printer. The user is told
+when the file is there (`notice`).
+
+Qt's print dialog can print into a file as well, and that is not taken away.
+But it wants the name typed in and proposes `print.pdf` in the current
+folder, which is why there is a button of Karten's own: see the Flatpak
+below.
 
 The dialog is a widget, where the rest of the interface is Qt Quick: Qt has
 print dialogs and a preview for widgets only, and the application object is
@@ -126,8 +139,8 @@ schema, the maps show the route on white.
 ## The pages
 
 `RoadbookDocument` holds texts and pictures and has one function, `paint`,
-for any `QPagedPaintDevice`: the printer of the preview, a `QPdfWriter` in
-the tests. It measures the head of the first page, places the rows down the
+for any `QPagedPaintDevice`: the printer of the preview, or a `QPdfWriter`
+when saving as a file and in the tests. It measures the head of the first page, places the rows down the
 columns (`Placement`), and draws the pages the device asks for
 (`pageRanges()`).
 
@@ -148,6 +161,12 @@ OpenGL, so unlike the map view it also runs with
 `QT_QPA_PLATFORM=offscreen`.
 
 In a Flatpak, printing goes through the CUPS socket the manifest grants.
+The sandbox has no access to the user's files, and its home folder is a
+temporary one: a file written to a path typed into the print dialog is gone
+when Karten closes. A file chosen in a file dialog is different, as that
+dialog is the desktop's (the portal's) and hands over the one file chosen.
+`write` uses a `QSaveFile` that may write directly, as beside such a file
+there need not be room for a temporary one.
 
 ## Limitations
 

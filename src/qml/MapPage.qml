@@ -35,6 +35,14 @@ Kirigami.Page {
         placeReviews = null;
     }
     property bool directionsMode: false
+    /// A place another program asked for with a geo: link, or an empty map:
+    /// latitude, longitude, positioned (whether these are a place, not just
+    /// filled in), zoom (0 for none), title, and query (words to search for
+    /// instead). It is shown once, when the map is there.
+    property var link: ({})
+    property bool linkShown: false
+    /// Whether the view of last time has been restored, which a link then departs from.
+    property bool viewRestored: false
     /// Set while waiting for the first position fix after "Show My Location".
     property bool centreOnPosition: false
 
@@ -86,6 +94,33 @@ Kirigami.Page {
             longitude: coordinate.longitude
         };
         Geocoder.reverse(coordinate.latitude, coordinate.longitude);
+    }
+
+    function showLink(): void {
+        if (!map || !viewRestored || linkShown || link.latitude === undefined) {
+            return;
+        }
+        linkShown = true;
+        const coordinate = QtPositioning.coordinate(link.latitude, link.longitude);
+        if (link.positioned) {
+            map.center = coordinate;
+            map.zoomLevel = Math.max(map.zoomLevel, 15);
+        }
+        if (link.zoom > 0) {
+            map.zoomLevel = Math.max(map.minimumZoomLevel, Math.min(map.maximumZoomLevel, link.zoom));
+        }
+        if (link.query.length > 0) {
+            panel.search(link.query);
+        } else if (link.title.length > 0) {
+            place = {
+                title: link.title,
+                subtitle: coordinateLabel(coordinate),
+                latitude: link.latitude,
+                longitude: link.longitude
+            };
+        } else {
+            dropPin(coordinate);
+        }
     }
 
     /// Uses a point on the map as start or destination, and finds a name for it.
@@ -241,6 +276,13 @@ Kirigami.Page {
         // Routes by road; a public transport connection has no roadbook.
         enabled: Roadbook.available && !Roadbook.busy
         onTriggered: Roadbook.print(page.Window.window)
+    }
+    Kirigami.Action {
+        id: saveRouteAction
+        text: i18nc("@action:inmenu", "Save Route as PDF…")
+        icon.name: "document-save-as-symbolic"
+        enabled: Roadbook.available && !Roadbook.busy
+        onTriggered: Roadbook.saveAs(page.Window.window)
     }
     Kirigami.Action {
         id: downloadAction
@@ -412,14 +454,21 @@ Kirigami.Page {
     }
     // The settings are only read once the page is complete, which is after
     // the map view inside it has been created.
-    Component.onCompleted: restoreView()
+    Component.onCompleted: {
+        restoreView();
+        viewRestored = true;
+        showLink();
+    }
     Component.onDestruction: saveView()
 
     Loader {
         id: mapLoader
         anchors.fill: parent
         sourceComponent: mapComponent
-        onLoaded: page.restoreView()
+        onLoaded: {
+            page.restoreView();
+            page.showLink();
+        }
     }
 
     Component {
@@ -807,7 +856,7 @@ Kirigami.Page {
             QQC2.Menu {
                 id: menu
                 Repeater {
-                    model: [printRouteAction, downloadAction, offlineMapsAction, settingsAction, reportAction, aboutAction]
+                    model: [printRouteAction, saveRouteAction, downloadAction, offlineMapsAction, settingsAction, reportAction, aboutAction]
                     QQC2.MenuItem {
                         required property Kirigami.Action modelData
                         action: modelData

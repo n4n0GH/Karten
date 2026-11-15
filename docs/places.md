@@ -12,6 +12,26 @@ A *place* in the interface is a JavaScript object with `title`, `subtitle`,
 `latitude` and `longitude` (and `type` when it came from the map). It is
 `MapPage.place`; the panel under the search box shows it.
 
+## A place from another program
+
+Address books, calendars and the like link to a place with a `geo:` link, and
+the desktop opens it with the map application chosen in its settings. Karten
+says it is one in its desktop file (`MimeType=x-scheme-handler/geo`,
+`Exec=karten %u`) and takes the link as its argument.
+
+`GeoUri::parse` (`src/core/geouri.*`) reads it: `geo:latitude,longitude` as
+RFC 5870 has it, and the two additions from Android that are common,
+`?z=` with a zoom level and `?q=` with either a position and its name
+(`geo:0,0?q=47.9959,7.8522(Freiburger Münster)`) or words to search for
+(`geo:0,0?q=Brandenburger Tor`). Coordinates of anything but the Earth are
+refused. `main.cpp` hands the result to the window as its `link` property,
+and `MapPage.showLink` acts on it once the view of last time is restored: it
+moves the map there and shows the place, named if the link names it and else
+as a dropped pin that is looked up, or it submits the search.
+
+A link is read at start only. One clicked while Karten is running opens a
+second window, as starting Karten twice does.
+
 ## Place data of a region
 
 When an extract is imported, `GraphBuilder::describePlace` decides whether a

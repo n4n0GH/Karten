@@ -13,8 +13,10 @@ A simple map for the Plasma desktop: search for a place and plan a route there
 by car, by bicycle, on foot or by public transport. The map, routing and place
 search keep working without an internet connection for the areas you have
 downloaded; public transport needs a connection. A route by road can be
-printed as a roadbook: every instruction with its distance from the start and
-a small map of the junction that points the way you are going.
+printed as a roadbook, or saved as a PDF file: every instruction with its
+distance from the start and a small map of the junction that points the way
+you are going. Other programs can have Karten show a place through `geo:`
+links, so it can be chosen as the desktop's map application.
 
 ![Karten showing a public transport connection through Berlin, from Schloss Charlottenburg to the East Side Gallery: a choice of connections with their times and changes beside the map, and the chosen one drawn on it](docs/images/screenshot.png)
 
@@ -160,6 +162,8 @@ To see what the map server inside Karten is asked for, run it with
 - Only routes by road are printed, not public transport connections. The
   maps of a roadbook need a vector map in the OpenMapTiles schema, which the
   default map is; with another map source they show the route on white.
+- A `geo:` link opens a window of its own, also when Karten is already
+  running.
 
 - The offline router ignores turn restrictions, barriers and live traffic, and
   snaps start and destination to the nearest road node.
