@@ -20,7 +20,7 @@ Kirigami.Page {
     signal settingsRequested
 
     /// The map itself; null for a moment while the map source changes.
-    readonly property Map map: mapLoader.item ? (mapLoader.item as MapView).map : null
+    readonly property Map map: mapLoader.item ? (mapLoader.item as MapSurface).map : null
     /// The place shown with a pin: an object with title, subtitle, latitude, longitude.
     property var place: null
     /// More about the place, once it has been looked up: see PlacePanel.
@@ -474,7 +474,7 @@ Kirigami.Page {
     Component {
         id: mapComponent
 
-        MapView {
+        MapSurface {
             id: view
 
             component Marker: MapQuickItem {
@@ -628,8 +628,8 @@ Kirigami.Page {
                 visible: routeDrag.dragging
             }
 
-            // Sits on top of the map to get the wheel before the map view's
-            // own handling, which jumps from one zoom level to the next.
+            // Sits on top of the map: the wheel, which MapSurface leaves to
+            // the page, and bending the route.
             Item {
                 anchors.fill: parent
 
@@ -732,7 +732,7 @@ Kirigami.Page {
                             page.zoomAround(page.pendingZoom + event.angleDelta.y / 120 * page.zoomStep, position);
                             return;
                         }
-                        // As the map view does it: turn with Shift, tilt with Ctrl.
+                        // As Qt's map view does it: turn with Shift, tilt with Ctrl.
                         const coordinate = map.toCoordinate(position, false);
                         if (event.modifiers === Qt.ShiftModifier) {
                             map.bearing += event.angleDelta.y / 15;

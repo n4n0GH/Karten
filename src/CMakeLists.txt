@@ -89,6 +89,7 @@ set_source_files_properties(qml/Preferences.qml PROPERTIES QT_QML_SINGLETON_TYPE
 ecm_target_qml_sources(karten SOURCES
     qml/Main.qml
     qml/MapPage.qml
+    qml/MapSurface.qml
     qml/MapControls.qml
     qml/CardBackground.qml
     qml/PlacePanel.qml

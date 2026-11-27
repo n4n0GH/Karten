@@ -37,6 +37,11 @@ SPDX-License-Identifier: CC0-1.0
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.2" date="2026-11-27">
+      <description>
+        <p>Dragging the map follows the pointer exactly again. On displays with fractional scaling the map lagged behind, and it could creep sideways while being dragged up or down and move faster in one direction than in the other.</p>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-11-15">
       <description>
         <p>Save a route as a PDF file: Save Route as PDF is in the menu, and the print preview has a button for it that keeps the paper chosen there. Karten now opens the geo: links that other applications use to show a place, so it can be chosen as the map application in the system settings.</p>

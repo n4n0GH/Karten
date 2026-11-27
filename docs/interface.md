@@ -39,6 +39,7 @@ reaching the map.
 | --- | --- |
 | `Main.qml` | The window. Opens Offline Maps, Settings and About as dialog layers; shows notifications from `OfflineManager`. |
 | `MapPage.qml` | The page: actions and shortcuts, the map view and its items, zooming, clicks and drags on the map, and the floating cards. The largest file. |
+| `MapSurface.qml` | The map with its dragging, flinging, pinching, turning and tilting; see below. |
 | `SidePanel.qml` | The card at the top left: search field and results, or `DirectionsView`. |
 | `SearchResults.qml` | The result list, shared by search and directions. |
 | `DirectionsView.qml` | Travel mode, stops, when to travel and the connections to choose from (public transport), totals with the button to print the route, and the legs with their steps. |
@@ -74,15 +75,24 @@ and the file dialog for saving a roadbook, both opened by `Roadbook`. See
 Order matters, because several things want the same events. An `Item` on top
 of the map holds:
 
-- a `WheelHandler` that replaces the map view's stepwise zoom with the
-  animated one (and keeps Shift for rotating, Ctrl for tilting);
+- a `WheelHandler` that zooms with the animation described above (Shift
+  rotates, Ctrl tilts);
 - a `MouseArea` (`routeDrag`) that is only interested in presses near the
   route line or on a detour pin. It rejects every other press, which then
-  reaches the map view's own pan and pinch handling. Once it has a press it
+  reaches the pan and pinch handling of `MapSurface`. Once it has a press it
   keeps it (`preventStealing`).
 
 Below that, on the map view: a left tap selects the place under it
 (`selectPlaceAt`), a right tap or long press opens the context menu.
+
+`MapSurface.qml` is Karten's own stand-in for Qt's `MapView`: a `Map` with
+handlers for dragging, flinging, pinching, turning and tilting. Qt's moves
+the map with `Map.pan()`, which takes whole pixels and measures them from a
+rounded-down middle of the view. With fractional scaling that drops part of
+every movement, and in a view of odd width or height the map creeps sideways
+by half a pixel per event. `MapSurface` instead keeps the coordinate that was
+pressed under the pointer (`alignCoordinateToPoint`), and a fling moves the
+centre by fractions of pixels (`panBy`).
 
 Whether a press is "near the route" is asked of `RouteController.distanceToRoute`
 and compared with a reach in pixels converted to metres at that spot.
